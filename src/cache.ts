@@ -117,13 +117,32 @@ export const createCache = ({
   ): Promise<void> => {
     assertIsValidOnDiskCacheKey({ key });
     const expiresAtMse = getMseNow() + secondsUntilExpiration * 1000;
+
+    // define the most observable format of the value; specifically, see if it is json.parseable; if so, parse it and use that, since its easier to look at in the cache file
+    const awaitedValue = await value;
+    const mostObservableValue = (() => {
+      try {
+        // if we can, then return the parsed value, so when we save it it is easy to read manually
+        return JSON.parse(awaitedValue);
+      } catch {
+        // otherwise, return the raw value, nothing more we can do
+        return awaitedValue;
+      }
+    })();
+
+    // save to disk
     await saveToDisk({
       directory: directoryToPersistTo,
       key,
-      value: JSON.stringify({
-        expiresAtMse,
-        value: await value,
-      }),
+      value: JSON.stringify(
+        {
+          expiresAtMse,
+          deserializedForObservability: typeof mostObservableValue !== 'string', // if its not a string, then it was deserialized by this method for observability
+          value: mostObservableValue,
+        },
+        null,
+        2,
+      ),
     });
   };
 
@@ -137,6 +156,8 @@ export const createCache = ({
     if (cacheContentSerialized === undefined) return undefined; // if not in cache, then undefined
     const cacheContent = JSON.parse(cacheContentSerialized);
     if (cacheContent.expiresAtMse < getMseNow()) return undefined; // if already expired, then undefined
+    if (cacheContent.deserializedForObservability)
+      return JSON.stringify(cacheContent.value); // if it had been deserialized for observability, reserialize it
     return cacheContent.value as string; // otherwise, its in the cache and not expired, so return the value
   };
 

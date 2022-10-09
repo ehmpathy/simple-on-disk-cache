@@ -1,3 +1,4 @@
+import { promises as fs } from 'fs';
 import { sleep } from './utils/sleep';
 import { createCache } from './cache';
 
@@ -64,6 +65,33 @@ describe('cache', () => {
       const { get } = createCache({ directoryToPersistTo });
       const value = await get('ghostie');
       expect(value).toEqual(undefined);
+    });
+    it('should save to disk the value json parsed, if parseable, to make it easier to observe when debugging', async () => {
+      const { get, set } = createCache({ directoryToPersistTo });
+
+      // set
+      const key = 'city';
+      const value = JSON.stringify({
+        name: 'atlantis',
+        galaxy: 'pegasus',
+        code: 821,
+      });
+      await set(key, value);
+
+      // check that in the file it was json parsed before stringified
+      const contents = await fs.readFile(
+        [directoryToPersistTo.mounted.path, key].join('/'),
+        {
+          encoding: 'utf-8',
+        },
+      );
+      const parsedContents = JSON.parse(contents);
+      expect(parsedContents.deserializedForObservability).toEqual(true);
+      expect(typeof parsedContents.value).not.toEqual('string');
+
+      // check that we can read the value
+      const foundValue = await get(key);
+      expect(foundValue).toEqual(value);
     });
   });
   describe.skip('s3', () => {
