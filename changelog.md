@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://www.github.com/ehmpathy/simple-on-disk-cache/compare/v1.0.1...v1.1.0) (2022-10-09)
+
+
+### Features
+
+* **obs:** save value to cache file as observably as possible ([11204fe](https://www.github.com/ehmpathy/simple-on-disk-cache/commit/11204febf46fbc3d3b5a4d1bc99dff2c5673230a))
+
 ### [1.0.1](https://www.github.com/ehmpathy/simple-on-disk-cache/compare/v1.0.0...v1.0.1) (2022-10-09)
 
 
