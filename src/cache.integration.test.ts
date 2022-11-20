@@ -93,6 +93,34 @@ describe('cache', () => {
       const foundValue = await get(key);
       expect(foundValue).toEqual(value);
     });
+    it('should expose the error on set, if a promise that resolves with an error was called to be set to the cache', async () => {
+      const { set } = createCache({ directoryToPersistTo });
+
+      // define the value
+      const key = 'surprise';
+      const expectedError = new Error('surprise!');
+      const value = Promise.reject(expectedError);
+
+      // prove the error is thrown onSet
+      try {
+        await set(key, value);
+        throw new Error('should not reach here');
+      } catch (error) {
+        expect(error).toEqual(expectedError);
+      }
+
+      // prove nothing was set into the cache for this key
+      const fileExists = await await fs
+        .readFile([directoryToPersistTo.mounted.path, key].join('/'), {
+          encoding: 'utf-8',
+        })
+        .then(() => true)
+        .catch((error) => {
+          if (error.code === 'ENOENT') return false;
+          throw error; // otherwise, something else is messed up
+        });
+      expect(fileExists).toEqual(false);
+    });
   });
   describe.skip('s3', () => {
     const directoryToPersistTo = {
