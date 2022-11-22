@@ -5,7 +5,12 @@ import { UnexpectedCodePathError } from './utils/errors/UnexpectedCodePathError'
 import { s3 } from './utils/s3';
 
 export interface SimpleOnDiskCache {
-  [index: string]: { value: any; expiresAtMse: number };
+  get: (key: string) => Promise<string | undefined>;
+  set: (
+    key: string,
+    value: string | Promise<string>,
+    options?: { secondsUntilExpiration?: number },
+  ) => Promise<void>;
 }
 
 export class InvalidOnDiskCacheKeyError extends Error {
@@ -106,7 +111,7 @@ export const createCache = ({
 }: {
   directoryToPersistTo: DirectoryToPersistTo;
   defaultSecondsUntilExpiration?: number;
-}) => {
+}): SimpleOnDiskCache => {
   // define how to set an item into the cache
   const set = async (
     key: string,
