@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.1.1](https://www.github.com/ehmpathy/simple-on-disk-cache/compare/v1.1.0...v1.1.1) (2022-11-22)
+
+
+### Bug Fixes
+
+* **tests:** add proof that errors attempted to be set are handled correctly ([ae06132](https://www.github.com/ehmpathy/simple-on-disk-cache/commit/ae0613254efd4a9bbe9a81e310ed15b1a453d8be))
+* **types:** expose a type for an instance of the cache ([a21fc63](https://www.github.com/ehmpathy/simple-on-disk-cache/commit/a21fc63819e1dbbc45b5decdf80fa323847bffbb))
+
 ## [1.1.0](https://www.github.com/ehmpathy/simple-on-disk-cache/compare/v1.0.1...v1.1.0) (2022-10-09)
 
 
