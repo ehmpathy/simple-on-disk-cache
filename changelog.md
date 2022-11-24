@@ -1,5 +1,14 @@
 # Changelog
 
+### [1.2.1](https://www.github.com/ehmpathy/simple-on-disk-cache/compare/v1.2.0...v1.2.1) (2022-11-24)
+
+
+### Bug Fixes
+
+* **cicd:** use node v16 in gh actions ([e341fea](https://www.github.com/ehmpathy/simple-on-disk-cache/commit/e341fea2545ecb5b88d04946aa4060fe5759d4e3))
+* **deps:** fix dep versions to ensure its buildable on cicd ([fba09f4](https://www.github.com/ehmpathy/simple-on-disk-cache/commit/fba09f4528b121e3f39ec418a3d186dffd5ca937))
+* **tests:** use fs.unlink instead of fs.rm ([392f410](https://www.github.com/ehmpathy/simple-on-disk-cache/commit/392f410f6f0a3e20133516a8647b2609e2a9f707))
+
 ## [1.2.0](https://www.github.com/ehmpathy/simple-on-disk-cache/compare/v1.1.1...v1.2.0) (2022-11-24)
 
 
