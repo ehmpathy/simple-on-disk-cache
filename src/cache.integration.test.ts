@@ -150,7 +150,7 @@ describe('cache', () => {
     });
     it('should keep accurate track of keys', async () => {
       // clear out the old keys, so that other tests dont affect the keycounting we want to do here
-      fs.rm(
+      fs.unlink(
         `${directoryToPersistTo.mounted.path}/${RESERVED_CACHE_KEY_FOR_VALID_KEYS}`,
       );
 
