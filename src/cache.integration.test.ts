@@ -1,6 +1,7 @@
 import { promises as fs } from 'fs';
 import { sleep } from './utils/sleep';
-import { createCache } from './cache';
+import { createCache, RESERVED_CACHE_KEY_FOR_VALID_KEYS } from './cache';
+import uuid from 'uuid';
 
 jest.setTimeout(60 * 1000);
 
@@ -61,6 +62,24 @@ describe('cache', () => {
       const iceCreamStateAfter5Sec = await get('ice-cream-state');
       expect(iceCreamStateAfter5Sec).toEqual(undefined); // no longer defined, since the item level seconds until expiration was 5
     });
+    it('should consider secondsUntilExpiration of null or infinity as never expiring', async () => {
+      const { set, get } = createCache({
+        directoryToPersistTo,
+        defaultSecondsUntilExpiration: 0, // expire immediately
+      });
+
+      // prove that setting something to the cache with default state will have it expired immediately
+      await set('dory-memory', 'something'); // lets see if dory can remember something
+      const doryMemory = await get('dory-memory');
+      expect(doryMemory).toEqual(undefined); // its already gone! dang default expiration
+
+      // prove that if we record the memory with expires-at Infinity, it persists
+      await set('elephant-memory', 'something', {
+        secondsUntilExpiration: Infinity,
+      });
+      const elephantMemory = await get('elephant-memory');
+      expect(elephantMemory).toEqual('something');
+    });
     it('should return undefined if a key has never been cached', async () => {
       const { get } = createCache({ directoryToPersistTo });
       const value = await get('ghostie');
@@ -120,6 +139,50 @@ describe('cache', () => {
           throw error; // otherwise, something else is messed up
         });
       expect(fileExists).toEqual(false);
+    });
+    it('should support invalidation by setting a keys value to undefined', async () => {
+      const { set, get } = createCache({ directoryToPersistTo });
+      await set('is-cereal-soup', 'yes');
+      const answer = await get('is-cereal-soup');
+      expect(answer).toEqual('yes');
+      await set('is-cereal-soup', undefined);
+      const answerNow = await get('is-cereal-soup');
+      expect(answerNow).toEqual(undefined);
+    });
+    it('should keep accurate track of keys', async () => {
+      // clear out the old keys, so that other tests dont affect the keycounting we want to do here
+      fs.rm(
+        `${directoryToPersistTo.mounted.path}/${RESERVED_CACHE_KEY_FOR_VALID_KEYS}`,
+      );
+
+      // create the cache
+      const { set, keys } = createCache({
+        directoryToPersistTo,
+      });
+
+      // check key is added when value is set
+      await set('meaning-of-life', '42');
+      const keys1 = await keys();
+      expect(keys1.length).toEqual(1);
+      expect(keys1[0]).toEqual('meaning-of-life');
+
+      // check that there are no duplicates when key value is updated
+      await set('meaning-of-life', '42.0');
+      const keys2 = await keys();
+      expect(keys2.length).toEqual(1);
+      expect(keys2[0]).toEqual('meaning-of-life');
+
+      // check that multiple keys can be set
+      await set('purpose-of-life', 'propagation');
+      const keys3 = await keys();
+      expect(keys3.length).toEqual(2);
+      expect(keys3[1]).toEqual('purpose-of-life');
+
+      // check that invalidation removes the key
+      await set('meaning-of-life', undefined);
+      const keys4 = await keys();
+      expect(keys4.length).toEqual(1);
+      expect(keys4[0]).toEqual('purpose-of-life');
     });
   });
   describe.skip('s3', () => {

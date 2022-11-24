@@ -64,6 +64,7 @@
     "uuid": "^3.3.3"
   },
   "dependencies": {
-    "aws-sdk": "^2.1231.0"
+    "aws-sdk": "^2.1231.0",
+    "type-fns": "^0.4.1"
   }
 }
