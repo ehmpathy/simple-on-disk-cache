@@ -1,7 +1,6 @@
 import { promises as fs } from 'fs';
 import { sleep } from './utils/sleep';
 import { createCache, RESERVED_CACHE_KEY_FOR_VALID_KEYS } from './cache';
-import uuid from 'uuid';
 
 jest.setTimeout(60 * 1000);
 
