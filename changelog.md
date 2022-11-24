@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://www.github.com/ehmpathy/simple-on-disk-cache/compare/v1.1.1...v1.2.0) (2022-11-24)
+
+
+### Features
+
+* **keys:** enable accurate retrieval of active valid cache keys ([3558572](https://www.github.com/ehmpathy/simple-on-disk-cache/commit/355857284a832115bf2657eb9a08cbe00e3e6d7b))
+
 ### [1.1.1](https://www.github.com/ehmpathy/simple-on-disk-cache/compare/v1.1.0...v1.1.1) (2022-11-22)
 
 
