@@ -217,11 +217,29 @@ export const createCache = ({
       key,
     });
     if (cacheContentSerialized === undefined) return undefined; // if not in cache, then undefined
-    const cacheContent = JSON.parse(cacheContentSerialized);
-    if (isRecordExpired(cacheContent)) return undefined; // if already expired, then undefined
-    if (cacheContent.deserializedForObservability)
-      return JSON.stringify(cacheContent.value); // if it had been deserialized for observability, reserialize it
-    return cacheContent.value as string; // otherwise, its in the cache and not expired, so return the value
+    try {
+      const cacheContent = JSON.parse(cacheContentSerialized);
+      if (isRecordExpired(cacheContent)) return undefined; // if already expired, then undefined
+      if (cacheContent.deserializedForObservability)
+        return JSON.stringify(cacheContent.value); // if it had been deserialized for observability, reserialize it
+      return cacheContent.value as string; // otherwise, its in the cache and not expired, so return the value
+    } catch (error) {
+      // if it was a json parsing error, warn about it and treat the key as invalid
+      if (
+        error instanceof Error &&
+        error.message.includes('Unexpected string in JSON at position')
+      ) {
+        // eslint-disable-next-line no-console
+        console.warn(
+          'simple-on-disk-cache: detected unparseable cache file. treating the result as invalid. this should not have occured',
+          { key },
+        );
+        return undefined;
+      }
+
+      // otherwise, propagate the error, we dont know how to handle it
+      throw error;
+    }
   };
 
   /**
