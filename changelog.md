@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.3.1](https://www.github.com/ehmpathy/simple-on-disk-cache/compare/v1.3.0...v1.3.1) (2022-11-25)
+
+
+### Bug Fixes
+
+* **keys:** decrease chance of corrupted keyfiles w/ max concurrency limit on keyfile updates ([1671c8e](https://www.github.com/ehmpathy/simple-on-disk-cache/commit/1671c8ec03d88e214927c67dcfc65ca5d81f1f96))
+
 ## [1.3.0](https://www.github.com/ehmpathy/simple-on-disk-cache/compare/v1.2.1...v1.3.0) (2022-11-25)
 
 
