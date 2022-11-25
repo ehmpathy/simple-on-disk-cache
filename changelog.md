@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://www.github.com/ehmpathy/simple-on-disk-cache/compare/v1.2.1...v1.3.0) (2022-11-25)
+
+
+### Features
+
+* **resiliance:** automatically recover from malformed cache files; just warn and move on ([9bb3569](https://www.github.com/ehmpathy/simple-on-disk-cache/commit/9bb35692413b59dce3438926a2b5b377c3e44573))
+
 ### [1.2.1](https://www.github.com/ehmpathy/simple-on-disk-cache/compare/v1.2.0...v1.2.1) (2022-11-24)
 
 
