@@ -65,6 +65,7 @@
   },
   "dependencies": {
     "aws-sdk": "^2.1231.0",
+    "bottleneck": "^2.19.5",
     "type-fns": "^0.4.1"
   }
 }

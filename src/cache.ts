@@ -1,8 +1,11 @@
 /* eslint-disable no-return-await */
+import Bottleneck from 'bottleneck';
 import { promises as fs } from 'fs';
 import { withNot } from 'type-fns';
 import { UnexpectedCodePathError } from './utils/errors/UnexpectedCodePathError';
 import { s3 } from './utils/s3';
+
+const updateKeyFileBottleneck = new Bottleneck({ maxConcurrent: 1 });
 
 export interface SimpleOnDiskCache {
   /**
@@ -284,23 +287,26 @@ export const createCache = ({
   }: {
     for: KeyWithMetadata;
   }) => {
-    // lookup current valid keys
-    const currentKeysWithMetadata = await getValidKeysWithMetadata();
+    // write inside of a bottleneck, to ensure that within one machine no more than one process no more than one thread is writing to the same file; prevents corrupted key files when writing to mounted directories + prevents same-machine race conditions
+    return updateKeyFileBottleneck.schedule(async () => {
+      // lookup current valid keys
+      const currentKeysWithMetadata = await getValidKeysWithMetadata();
 
-    // save the keys w/ an extra key
-    await set(
-      RESERVED_CACHE_KEY_FOR_VALID_KEYS,
-      JSON.stringify([
-        // save the current keys, excluding the previous state of this key if it was there
-        ...currentKeysWithMetadata.filter(
-          ({ key }) => key !== forKeyWithMetadata.key, // filter out prior state for this key, if any
-        ),
+      // save the keys w/ an extra key
+      await set(
+        RESERVED_CACHE_KEY_FOR_VALID_KEYS,
+        JSON.stringify([
+          // save the current keys, excluding the previous state of this key if it was there
+          ...currentKeysWithMetadata.filter(
+            ({ key }) => key !== forKeyWithMetadata.key, // filter out prior state for this key, if any
+          ),
 
-        // save this key, if it isn't expired
-        ...(isRecordExpired(forKeyWithMetadata) ? [] : [forKeyWithMetadata]),
-      ]),
-      { secondsUntilExpiration: Infinity },
-    );
+          // save this key, if it isn't expired
+          ...(isRecordExpired(forKeyWithMetadata) ? [] : [forKeyWithMetadata]),
+        ]),
+        { secondsUntilExpiration: Infinity },
+      );
+    });
   };
 
   /**
