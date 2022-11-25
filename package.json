@@ -1,6 +1,6 @@
 {
   "name": "simple-on-disk-cache",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "description": "A simple on-disk cache, supporting local and remote filesystem targets, with time based expiration policies.",
   "author": "UladKasach @uladkasach",
   "license": "MIT",
