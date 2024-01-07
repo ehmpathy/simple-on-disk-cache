@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.3.2](https://www.github.com/ehmpathy/simple-on-disk-cache/compare/v1.3.1...v1.3.2) (2024-01-07)
+
+
+### Bug Fixes
+
+* **dirs:** mkdir when creating cache to prevent errors ([b3f00fa](https://www.github.com/ehmpathy/simple-on-disk-cache/commit/b3f00fa296a38d2d851efb36aa372de8600fad6d))
+
 ### [1.3.1](https://www.github.com/ehmpathy/simple-on-disk-cache/compare/v1.3.0...v1.3.1) (2022-11-25)
 
 
