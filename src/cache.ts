@@ -156,6 +156,10 @@ export const createCache = ({
   directoryToPersistTo: DirectoryToPersistTo;
   defaultSecondsUntilExpiration?: number;
 }): SimpleOnDiskCache => {
+  // kick off creating the directory if it doesn't already exist, to prevent usage errors
+  if (isMountedDirectory(directoryToPersistTo))
+    void fs.mkdir(directoryToPersistTo.mounted.path, { recursive: true });
+
   /**
    * define how to set an item into the cache
    */
