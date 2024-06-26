@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.4](https://github.com/ehmpathy/simple-on-disk-cache/compare/v1.3.3...v1.3.4) (2024-06-26)
+
+
+### Bug Fixes
+
+* **cicd:** enable publish post creds req ([0c579b0](https://github.com/ehmpathy/simple-on-disk-cache/commit/0c579b0fcf79d23d2d0b9c17fd3ad600e0be9b19))
+
 ## [1.3.3](https://github.com/ehmpathy/simple-on-disk-cache/compare/v1.3.2...v1.3.3) (2024-06-26)
 
 
