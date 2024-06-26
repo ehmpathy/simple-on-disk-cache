@@ -2,7 +2,7 @@
 import { UnexpectedCodePathError } from '@ehmpathy/error-fns';
 import Bottleneck from 'bottleneck';
 import { promises as fs } from 'fs';
-import { withNot } from 'type-fns';
+import { isAFunction, withNot } from 'type-fns';
 
 import { s3 } from './utils/s3';
 
@@ -148,18 +148,39 @@ export const isRecordExpired = ({
 };
 
 /**
+ * declares a method that's able to resolve the directory to persist to
+ *
+ * supports
+ * - async getters
+ * - direct declaration
+ */
+const resolveDirectoryToPersistTo = async (
+  input: DirectoryToPersistTo | (() => Promise<DirectoryToPersistTo>),
+): Promise<DirectoryToPersistTo> =>
+  isAFunction(input) ? await input() : input;
+
+/**
  * create a simple on-disk cache
  */
 export const createCache = ({
-  directoryToPersistTo,
+  directoryToPersistTo: directoryToPersistToInput,
   defaultSecondsUntilExpiration = 5 * 60,
 }: {
-  directoryToPersistTo: DirectoryToPersistTo;
+  directoryToPersistTo:
+    | DirectoryToPersistTo
+    | (() => Promise<DirectoryToPersistTo>);
   defaultSecondsUntilExpiration?: number;
 }): SimpleOnDiskCache => {
+  // kick off a promise to get the directory to persist to
+  const promiseDirectoryToPersistTo = resolveDirectoryToPersistTo(
+    directoryToPersistToInput,
+  );
+
   // kick off creating the directory if it doesn't already exist, to prevent usage errors
-  if (isMountedDirectory(directoryToPersistTo))
-    void fs.mkdir(directoryToPersistTo.mounted.path, { recursive: true });
+  void promiseDirectoryToPersistTo.then(async (directoryToPersistTo) => {
+    if (isMountedDirectory(directoryToPersistTo))
+      await fs.mkdir(directoryToPersistTo.mounted.path, { recursive: true });
+  });
 
   /**
    * define how to set an item into the cache
@@ -194,6 +215,7 @@ export const createCache = ({
     })();
 
     // save to disk
+    const directoryToPersistTo = await promiseDirectoryToPersistTo;
     await saveToDisk({
       directory: directoryToPersistTo,
       key,
@@ -220,6 +242,7 @@ export const createCache = ({
    */
   const get = async (key: string): Promise<string | undefined> => {
     assertIsValidOnDiskCacheKey({ key });
+    const directoryToPersistTo = await promiseDirectoryToPersistTo;
     const cacheContentSerialized = await readFromDisk({
       directory: directoryToPersistTo,
       key,

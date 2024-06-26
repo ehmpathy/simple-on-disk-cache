@@ -251,5 +251,11 @@ describe('cache', () => {
       const value = await get('ghostie');
       expect(value).toEqual(undefined);
     });
+    it('should support an async getter for the directory to persist to', async () => {
+      const { set, get } = createCache({ directoryToPersistTo });
+      await set('what-do-you-call-a-fake-noodle', 'an-impasta');
+      const answer = await get('what-do-you-call-a-fake-noodle');
+      expect(answer).toEqual('an-impasta');
+    });
   });
 });
