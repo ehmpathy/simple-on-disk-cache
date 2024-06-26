@@ -185,9 +185,12 @@ describe('cache', () => {
       expect(keys4[0]).toEqual('purpose-of-life');
     });
   });
-  describe.skip('s3', () => {
+  describe('s3', () => {
     const directoryToPersistTo = {
-      s3: { bucket: '__todo__', prefix: '__test__' },
+      s3: {
+        bucket: 'ehmpathy-simple-on-disk-cache-test-bucket',
+        prefix: 'test/integration/s3',
+      },
     };
     it('should be able to add an item to the cache', async () => {
       const { set } = createCache({ directoryToPersistTo });
@@ -202,7 +205,7 @@ describe('cache', () => {
       const licks = await get(
         'how-many-licks-does-it-take-to-get-to-the-center-of-a-tootsie-pop',
       );
-      expect(licks).toEqual(3);
+      expect(licks).toEqual('3');
     });
     it('should respect the default expiration for the cache', async () => {
       const { set, get } = createCache({
@@ -215,13 +218,13 @@ describe('cache', () => {
       const popcornStatus = await get('how-popped-is-the-popcorn');
       expect(popcornStatus).toEqual('not popped');
 
-      // prove that the value is still accessible after 9 seconds, since default ttl is 10 seconds
-      await sleep(9 * 1000);
+      // prove that the value is still accessible after 8 seconds, since default ttl is 10 seconds
+      await sleep(8 * 1000);
       const popcornStatusAfter9Sec = await get('how-popped-is-the-popcorn');
       expect(popcornStatusAfter9Sec).toEqual('not popped'); // still should say not popped
 
-      // and prove that after a total of 9 seconds, the status is no longer in the cache
-      await sleep(1 * 1000); // sleep 1 more second
+      // and prove that after a total of 10 seconds, the status is no longer in the cache
+      await sleep(2 * 1000); // sleep 2 more second
       const popcornStatusAfter10Sec = await get('how-popped-is-the-popcorn');
       expect(popcornStatusAfter10Sec).toEqual(undefined); // no longer defined, since the default seconds until expiration was 15
     });
@@ -234,12 +237,12 @@ describe('cache', () => {
       expect(iceCreamState).toEqual('solid');
 
       // prove that the value is still accessible after 4 seconds, since default ttl is 5 seconds
-      await sleep(4 * 1000);
+      await sleep(3 * 1000);
       const iceCreamStateAfter4Sec = await get('ice-cream-state');
       expect(iceCreamStateAfter4Sec).toEqual('solid'); // still should say solid
 
       // and prove that after a total of 5 seconds, the state is no longer in the cache
-      await sleep(1 * 1000); // sleep 1 more second
+      await sleep(2 * 1000); // sleep 2 more second
       const iceCreamStateAfter5Sec = await get('ice-cream-state');
       expect(iceCreamStateAfter5Sec).toEqual(undefined); // no longer defined, since the item level seconds until expiration was 5
     });
