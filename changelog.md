@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.3](https://github.com/ehmpathy/simple-on-disk-cache/compare/v1.3.2...v1.3.3) (2024-06-26)
+
+
+### Bug Fixes
+
+* **practs:** upgrade to latest best ([#13](https://github.com/ehmpathy/simple-on-disk-cache/issues/13)) ([63a10cd](https://github.com/ehmpathy/simple-on-disk-cache/commit/63a10cd236e6b4ad762e956f513cc8420a3ff276))
+* **tests:** enable s3 cicd tests ([#12](https://github.com/ehmpathy/simple-on-disk-cache/issues/12)) ([6015abd](https://github.com/ehmpathy/simple-on-disk-cache/commit/6015abdea51c5a03451d0e689152d7408e2ef456))
+
 ### [1.3.2](https://www.github.com/ehmpathy/simple-on-disk-cache/compare/v1.3.1...v1.3.2) (2024-01-07)
 
 
