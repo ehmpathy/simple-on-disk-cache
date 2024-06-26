@@ -1,8 +1,9 @@
 /* eslint-disable no-return-await */
+import { UnexpectedCodePathError } from '@ehmpathy/error-fns';
 import Bottleneck from 'bottleneck';
 import { promises as fs } from 'fs';
 import { withNot } from 'type-fns';
-import { UnexpectedCodePathError } from './utils/errors/UnexpectedCodePathError';
+
 import { s3 } from './utils/s3';
 
 const updateKeyFileBottleneck = new Bottleneck({ maxConcurrent: 1 });

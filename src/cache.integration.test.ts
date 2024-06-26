@@ -1,5 +1,6 @@
+import { sleep } from '@ehmpathy/uni-time';
 import { promises as fs } from 'fs';
-import { sleep } from './utils/sleep';
+
 import { createCache, RESERVED_CACHE_KEY_FOR_VALID_KEYS } from './cache';
 
 jest.setTimeout(60 * 1000);
@@ -150,7 +151,7 @@ describe('cache', () => {
     });
     it('should keep accurate track of keys', async () => {
       // clear out the old keys, so that other tests dont affect the keycounting we want to do here
-      fs.unlink(
+      await fs.unlink(
         `${directoryToPersistTo.mounted.path}/${RESERVED_CACHE_KEY_FOR_VALID_KEYS}`,
       );
 
