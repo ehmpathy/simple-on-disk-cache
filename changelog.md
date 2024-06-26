@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/ehmpathy/simple-on-disk-cache/compare/v1.3.4...v1.4.0) (2024-06-26)
+
+
+### Features
+
+* **config:** enable async getter for directory def ([5040c8b](https://github.com/ehmpathy/simple-on-disk-cache/commit/5040c8b762e1e26bf57e0232d7b57e0d97ef4dc9))
+
 ## [1.3.4](https://github.com/ehmpathy/simple-on-disk-cache/compare/v1.3.3...v1.3.4) (2024-06-26)
 
 
