@@ -1,7 +1,7 @@
-/* eslint-disable no-return-await */
 import { UnexpectedCodePathError } from '@ehmpathy/error-fns';
 import Bottleneck from 'bottleneck';
 import { promises as fs } from 'fs';
+import { createCache as createInMemoryCache } from 'simple-in-memory-cache';
 import { isAFunction, withNot } from 'type-fns';
 
 import { s3 } from './utils/s3';
@@ -373,11 +373,56 @@ export const createCache = ({
   };
 
   /**
+   * wrap the get and set around an in memory cache, to prevent redundant disk.reads
+   *
+   * why?
+   * - disk reads are ~15ms each
+   * - memory reads are nanoseconds (1000x faster)
+   * - with memory.hit before disk.hit, performance improves massively for cache.hits
+   */
+  const cacheInMemory = createInMemoryCache<
+    string | undefined | Promise<string | undefined>
+  >({
+    defaultSecondsUntilExpiration,
+  });
+  const getWithMemory = async (
+    ...args: Parameters<typeof get>
+  ): ReturnType<typeof get> => {
+    // check in memory, to prevent disk hits
+    const valueFoundInMemoryBefore = await cacheInMemory.get(...args);
+    if (valueFoundInMemoryBefore) return valueFoundInMemoryBefore;
+
+    // if not in memory, then .get from disk
+    const valueFoundOnDisk = await getWithValidKeyTracking(...args);
+    if (!valueFoundOnDisk) return undefined; // if not found on disk either, then defo undefined
+
+    // since found on disk, set to in memory cache, for successful subsequent lookups
+    await cacheInMemory.set(args[0], valueFoundOnDisk);
+
+    // and get it from memory now, to ensure consistent output
+    const valueFoundInMemoryAfter = await cacheInMemory.get(...args);
+    if (!valueFoundInMemoryAfter)
+      throw new UnexpectedCodePathError(
+        'could not find value in memory after having been set',
+      );
+    return valueFoundInMemoryAfter;
+  };
+  const setWithMemory = async (
+    ...args: Parameters<typeof set>
+  ): Promise<void> => {
+    // set to disk
+    await setWithValidKeyTracking(...args);
+
+    // set to memory
+    await cacheInMemory.set(...args);
+  };
+
+  /**
    * return the api
    */
   return {
-    set: setWithValidKeyTracking,
-    get: getWithValidKeyTracking,
+    set: setWithMemory,
+    get: getWithMemory,
     keys: getValidKeys,
   };
 };

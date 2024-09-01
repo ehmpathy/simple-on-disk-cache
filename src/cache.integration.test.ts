@@ -184,6 +184,52 @@ describe('cache', () => {
       expect(keys4.length).toEqual(1);
       expect(keys4[0]).toEqual('purpose-of-life');
     });
+    it('should prevent redundant disk.reads to maximize speed', async () => {
+      // clear out the old keys, so that other tests dont affect the keycounting we want to do here
+      await fs.unlink(
+        `${directoryToPersistTo.mounted.path}/${RESERVED_CACHE_KEY_FOR_VALID_KEYS}`,
+      );
+
+      // spy on the readFile api
+      const readFileSpy = jest.spyOn(fs, 'readFile');
+
+      // create the cache
+      const cacheFirst = createCache({
+        directoryToPersistTo,
+      });
+
+      // set a value
+      await cacheFirst.set('meaning-of-life', '42');
+
+      // verify the expected number of disk reads
+      expect(readFileSpy).toHaveBeenCalledTimes(1);
+
+      // get the value
+      const valueFirst = await cacheFirst.get('meaning-of-life');
+      expect(valueFirst).toEqual('42');
+
+      // verify that we did not readFile any more times, since it should have been .set to memory already
+      expect(readFileSpy).toHaveBeenCalledTimes(1);
+
+      // now, create a new cache, to clear out the in memory cache
+      const cacheSecond = createCache({
+        directoryToPersistTo,
+      });
+
+      // get the value again
+      const valueSecond = await cacheSecond.get('meaning-of-life');
+      expect(valueSecond).toEqual('42'); // same value
+
+      // verify that we read from disk once to find it, since it was not in memory
+      expect(readFileSpy).toHaveBeenCalledTimes(3); // 2x get on read through
+
+      // get the value again
+      const valueThird = await cacheSecond.get('meaning-of-life');
+      expect(valueThird).toEqual('42'); // same value
+
+      // verify that we did not readFile any more times, since it should have been .set to memory already
+      expect(readFileSpy).toHaveBeenCalledTimes(3);
+    });
   });
   describe('s3', () => {
     const directoryToPersistTo = {
