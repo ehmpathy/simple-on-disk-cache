@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/ehmpathy/simple-on-disk-cache/compare/v1.4.0...v1.5.0) (2024-09-01)
+
+
+### Features
+
+* **perf:** prevent redundant disk.reads via memory cache for perfboost ([f13539a](https://github.com/ehmpathy/simple-on-disk-cache/commit/f13539a2ac50ffb191dd68d559f3bbfdb0c4cbcf))
+
 ## [1.4.0](https://github.com/ehmpathy/simple-on-disk-cache/compare/v1.3.4...v1.4.0) (2024-06-26)
 
 
