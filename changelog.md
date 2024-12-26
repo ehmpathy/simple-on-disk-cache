@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/ehmpathy/simple-on-disk-cache/compare/v1.5.0...v1.6.0) (2024-12-26)
+
+
+### Features
+
+* **terms:** use uni-time glossary for duration term ([3268ee6](https://github.com/ehmpathy/simple-on-disk-cache/commit/3268ee6f9d20291f27498e49aa01c2010656dabf))
+
 ## [1.5.0](https://github.com/ehmpathy/simple-on-disk-cache/compare/v1.4.0...v1.5.0) (2024-09-01)
 
 
