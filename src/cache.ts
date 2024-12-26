@@ -2,9 +2,12 @@ import { UnexpectedCodePathError } from '@ehmpathy/error-fns';
 import { toMilliseconds, UniDuration } from '@ehmpathy/uni-time';
 import Bottleneck from 'bottleneck';
 import { promises as fs } from 'fs';
+import { toHashSha256Sync } from 'hash-fns';
+import { asSerialJSON, Serializable } from 'serde-fns';
 import { createCache as createInMemoryCache } from 'simple-in-memory-cache';
 import { isAFunction, withNot } from 'type-fns';
 
+import { assertIsValidOnDiskCacheKey } from './key/assertIsValidOnDiskCacheKey';
 import { s3 } from './utils/s3';
 
 const updateKeyFileBottleneck = new Bottleneck({ maxConcurrent: 1 });
@@ -29,20 +32,6 @@ export interface SimpleOnDiskCache {
    */
   keys: () => Promise<string[]>;
 }
-
-export class InvalidOnDiskCacheKeyError extends Error {
-  constructor({ key }: { key: string }) {
-    super(
-      `
-The on-disk cache key requested is invalid: '${key}'. Only alphanumeric characters and period, dash, and underscore are allowed.
-    `.trim(),
-    );
-  }
-}
-const assertIsValidOnDiskCacheKey = ({ key }: { key: string }) => {
-  const isValid = /^[a-zA-Z0-9.\-_]+$/.test(key); // only allow those characters, to ensure its safe for disk file name
-  if (!isValid) throw new InvalidOnDiskCacheKeyError({ key });
-};
 
 export const RESERVED_CACHE_KEY_FOR_VALID_KEYS =
   '_.simple_on_disk_cache.valid_keys';

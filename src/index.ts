@@ -1,6 +1,3 @@
-export {
-  createCache,
-  SimpleOnDiskCache,
-  DirectoryToPersistTo,
-  InvalidOnDiskCacheKeyError,
-} from './cache';
+export { createCache, SimpleOnDiskCache, DirectoryToPersistTo } from './cache';
+export { InvalidOnDiskCacheKeyError } from './key/assertIsValidOnDiskCacheKey';
+export { castToSafeOnDiskCacheKey } from './key/castToSafeOnDiskCacheKey';
