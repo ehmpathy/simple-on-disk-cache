@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.0](https://github.com/ehmpathy/simple-on-disk-cache/compare/v1.6.0...v1.7.0) (2024-12-26)
+
+
+### Features
+
+* **util:** expose cast to safe ondisk cache key procedure ([74b604f](https://github.com/ehmpathy/simple-on-disk-cache/commit/74b604f29efd900311aee4f2d05a4c090d1c3d1f))
+
 ## [1.6.0](https://github.com/ehmpathy/simple-on-disk-cache/compare/v1.5.0...v1.6.0) (2024-12-26)
 
 
