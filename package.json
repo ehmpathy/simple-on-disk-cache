@@ -63,7 +63,7 @@
     "@ehmpathy/uni-time": "^1.4.0",
     "aws-sdk": "^2.1231.0",
     "bottleneck": "^2.19.5",
-    "simple-in-memory-cache": "^0.3.3",
+    "simple-in-memory-cache": "^0.4.0",
     "type-fns": "^1.19.0"
   },
   "devDependencies": {

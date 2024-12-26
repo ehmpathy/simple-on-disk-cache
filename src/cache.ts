@@ -1,4 +1,5 @@
 import { UnexpectedCodePathError } from '@ehmpathy/error-fns';
+import { toMilliseconds, UniDuration } from '@ehmpathy/uni-time';
 import Bottleneck from 'bottleneck';
 import { promises as fs } from 'fs';
 import { createCache as createInMemoryCache } from 'simple-in-memory-cache';
@@ -20,7 +21,7 @@ export interface SimpleOnDiskCache {
   set: (
     key: string,
     value: string | undefined | Promise<string | undefined>,
-    options?: { secondsUntilExpiration?: number },
+    options?: { expiration?: UniDuration | null },
   ) => Promise<void>;
 
   /**
@@ -163,13 +164,18 @@ const resolveDirectoryToPersistTo = async (
  * create a simple on-disk cache
  */
 export const createCache = ({
-  directoryToPersistTo: directoryToPersistToInput,
-  defaultSecondsUntilExpiration = 5 * 60,
+  directory: directoryToPersistToInput,
+  expiration: defaultExpiration = { minutes: 5 },
 }: {
-  directoryToPersistTo:
-    | DirectoryToPersistTo
-    | (() => Promise<DirectoryToPersistTo>);
-  defaultSecondsUntilExpiration?: number;
+  /**
+   * .what = the directory into which to persist the cache
+   */
+  directory: DirectoryToPersistTo | (() => Promise<DirectoryToPersistTo>);
+
+  /**
+   * .what = how long to keep items cached until they expire, by default
+   */
+  expiration?: UniDuration | null;
 }): SimpleOnDiskCache => {
   // kick off a promise to get the directory to persist to
   const promiseDirectoryToPersistTo = resolveDirectoryToPersistTo(
@@ -189,14 +195,14 @@ export const createCache = ({
     key: string,
     value: string | undefined | Promise<string | undefined>,
     {
-      secondsUntilExpiration = defaultSecondsUntilExpiration,
-    }: { secondsUntilExpiration?: number } = {},
+      expiration = defaultExpiration,
+    }: { expiration?: UniDuration | null } = {},
   ): Promise<KeyWithMetadata> => {
     assertIsValidOnDiskCacheKey({ key });
     const expiresAtMse =
       value === undefined
         ? 0 // if value was "undefined", then this key was just invalidated; mark it as invalid with the expiresAt timestamp as well
-        : getMseNow() + secondsUntilExpiration * 1000;
+        : getMseNow() + (expiration ? toMilliseconds(expiration) : Infinity); // infinity if null
 
     // define the most observable format of the value; specifically, see if it is json.parseable; if so, parse it and use that, since its easier to look at in the cache file
     const awaitedValue = await value;
@@ -332,7 +338,7 @@ export const createCache = ({
           // save this key, if it isn't expired
           ...(isRecordExpired(forKeyWithMetadata) ? [] : [forKeyWithMetadata]),
         ]),
-        { secondsUntilExpiration: Infinity },
+        { expiration: null },
       );
     });
   };
@@ -383,7 +389,7 @@ export const createCache = ({
   const cacheInMemory = createInMemoryCache<
     string | undefined | Promise<string | undefined>
   >({
-    defaultSecondsUntilExpiration,
+    expiration: defaultExpiration,
   });
   const getWithMemory = async (
     ...args: Parameters<typeof get>

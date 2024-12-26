@@ -9,11 +9,11 @@ describe('cache', () => {
   describe('mounted', () => {
     const directoryToPersistTo = { mounted: { path: `${__dirname}/__tmp__` } };
     it('should be able to add an item to the cache', async () => {
-      const { set } = createCache({ directoryToPersistTo });
+      const { set } = createCache({ directory: directoryToPersistTo });
       await set('meaning-of-life', '42');
     });
     it('should be able to get an item from the cache', async () => {
-      const { set, get } = createCache({ directoryToPersistTo });
+      const { set, get } = createCache({ directory: directoryToPersistTo });
       await set(
         'how-many-licks-does-it-take-to-get-to-the-center-of-a-tootsie-pop',
         '3',
@@ -25,8 +25,8 @@ describe('cache', () => {
     });
     it('should respect the default expiration for the cache', async () => {
       const { set, get } = createCache({
-        directoryToPersistTo,
-        defaultSecondsUntilExpiration: 10,
+        directory: directoryToPersistTo,
+        expiration: { seconds: 10 },
       }); // we're gonna use this cache to keep track of the popcorn in the microwave - we should check more regularly since it changes quickly!
       await set('how-popped-is-the-popcorn', 'not popped');
 
@@ -45,8 +45,8 @@ describe('cache', () => {
       expect(popcornStatusAfter10Sec).toEqual(undefined); // no longer defined, since the default seconds until expiration was 15
     });
     it('should respect the item level expiration for the cache', async () => {
-      const { set, get } = createCache({ directoryToPersistTo }); // remember, default expiration is greater than 1 min
-      await set('ice-cream-state', 'solid', { secondsUntilExpiration: 5 }); // ice cream changes quickly in the heat! lets keep a quick eye on this
+      const { set, get } = createCache({ directory: directoryToPersistTo }); // remember, default expiration is greater than 1 min
+      await set('ice-cream-state', 'solid', { expiration: { seconds: 5 } }); // ice cream changes quickly in the heat! lets keep a quick eye on this
 
       // prove that we recorded the value and its accessible immediately after setting
       const iceCreamState = await get('ice-cream-state');
@@ -64,8 +64,8 @@ describe('cache', () => {
     });
     it('should consider secondsUntilExpiration of null or infinity as never expiring', async () => {
       const { set, get } = createCache({
-        directoryToPersistTo,
-        defaultSecondsUntilExpiration: 0, // expire immediately
+        directory: directoryToPersistTo,
+        expiration: { seconds: 0 }, // expire immediately
       });
 
       // prove that setting something to the cache with default state will have it expired immediately
@@ -73,20 +73,20 @@ describe('cache', () => {
       const doryMemory = await get('dory-memory');
       expect(doryMemory).toEqual(undefined); // its already gone! dang default expiration
 
-      // prove that if we record the memory with expires-at Infinity, it persists
+      // prove that if we record the memory with expires-at null, it persists
       await set('elephant-memory', 'something', {
-        secondsUntilExpiration: Infinity,
+        expiration: null,
       });
       const elephantMemory = await get('elephant-memory');
       expect(elephantMemory).toEqual('something');
     });
     it('should return undefined if a key has never been cached', async () => {
-      const { get } = createCache({ directoryToPersistTo });
+      const { get } = createCache({ directory: directoryToPersistTo });
       const value = await get('ghostie');
       expect(value).toEqual(undefined);
     });
     it('should save to disk the value json parsed, if parseable, to make it easier to observe when debugging', async () => {
-      const { get, set } = createCache({ directoryToPersistTo });
+      const { get, set } = createCache({ directory: directoryToPersistTo });
 
       // set
       const key = 'city';
@@ -113,7 +113,7 @@ describe('cache', () => {
       expect(foundValue).toEqual(value);
     });
     it('should expose the error on set, if a promise that resolves with an error was called to be set to the cache', async () => {
-      const { set } = createCache({ directoryToPersistTo });
+      const { set } = createCache({ directory: directoryToPersistTo });
 
       // define the value
       const key = 'surprise';
@@ -141,7 +141,7 @@ describe('cache', () => {
       expect(fileExists).toEqual(false);
     });
     it('should support invalidation by setting a keys value to undefined', async () => {
-      const { set, get } = createCache({ directoryToPersistTo });
+      const { set, get } = createCache({ directory: directoryToPersistTo });
       await set('is-cereal-soup', 'yes');
       const answer = await get('is-cereal-soup');
       expect(answer).toEqual('yes');
@@ -157,7 +157,7 @@ describe('cache', () => {
 
       // create the cache
       const { set, keys } = createCache({
-        directoryToPersistTo,
+        directory: directoryToPersistTo,
       });
 
       // check key is added when value is set
@@ -195,7 +195,7 @@ describe('cache', () => {
 
       // create the cache
       const cacheFirst = createCache({
-        directoryToPersistTo,
+        directory: directoryToPersistTo,
       });
 
       // set a value
@@ -213,7 +213,7 @@ describe('cache', () => {
 
       // now, create a new cache, to clear out the in memory cache
       const cacheSecond = createCache({
-        directoryToPersistTo,
+        directory: directoryToPersistTo,
       });
 
       // get the value again
@@ -239,11 +239,11 @@ describe('cache', () => {
       },
     };
     it('should be able to add an item to the cache', async () => {
-      const { set } = createCache({ directoryToPersistTo });
+      const { set } = createCache({ directory: directoryToPersistTo });
       await set('meaning-of-life', '42');
     });
     it('should be able to get an item from the cache', async () => {
-      const { set, get } = createCache({ directoryToPersistTo });
+      const { set, get } = createCache({ directory: directoryToPersistTo });
       await set(
         'how-many-licks-does-it-take-to-get-to-the-center-of-a-tootsie-pop',
         '3',
@@ -255,8 +255,8 @@ describe('cache', () => {
     });
     it('should respect the default expiration for the cache', async () => {
       const { set, get } = createCache({
-        directoryToPersistTo,
-        defaultSecondsUntilExpiration: 10,
+        directory: directoryToPersistTo,
+        expiration: { seconds: 10 },
       }); // we're gonna use this cache to keep track of the popcorn in the microwave - we should check more regularly since it changes quickly!
       await set('how-popped-is-the-popcorn', 'not popped');
 
@@ -275,8 +275,8 @@ describe('cache', () => {
       expect(popcornStatusAfter10Sec).toEqual(undefined); // no longer defined, since the default seconds until expiration was 15
     });
     it('should respect the item level expiration for the cache', async () => {
-      const { set, get } = createCache({ directoryToPersistTo }); // remember, default expiration is greater than 1 min
-      await set('ice-cream-state', 'solid', { secondsUntilExpiration: 5 }); // ice cream changes quickly in the heat! lets keep a quick eye on this
+      const { set, get } = createCache({ directory: directoryToPersistTo }); // remember, default expiration is greater than 1 min
+      await set('ice-cream-state', 'solid', { expiration: { seconds: 5 } }); // ice cream changes quickly in the heat! lets keep a quick eye on this
 
       // prove that we recorded the value and its accessible immediately after setting
       const iceCreamState = await get('ice-cream-state');
@@ -293,12 +293,12 @@ describe('cache', () => {
       expect(iceCreamStateAfter5Sec).toEqual(undefined); // no longer defined, since the item level seconds until expiration was 5
     });
     it('should return undefined if a key has never been cached', async () => {
-      const { get } = createCache({ directoryToPersistTo });
+      const { get } = createCache({ directory: directoryToPersistTo });
       const value = await get('ghostie');
       expect(value).toEqual(undefined);
     });
     it('should support an async getter for the directory to persist to', async () => {
-      const { set, get } = createCache({ directoryToPersistTo });
+      const { set, get } = createCache({ directory: directoryToPersistTo });
       await set('what-do-you-call-a-fake-noodle', 'an-impasta');
       const answer = await get('what-do-you-call-a-fake-noodle');
       expect(answer).toEqual('an-impasta');
