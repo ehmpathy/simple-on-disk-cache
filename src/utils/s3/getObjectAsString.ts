@@ -1,4 +1,6 @@
-import { getObject } from './getObject';
+import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
+
+const s3 = new S3Client();
 
 export const getObjectAsString = async ({
   bucket,
@@ -6,10 +8,19 @@ export const getObjectAsString = async ({
 }: {
   bucket: string;
   key: string;
-}) => {
-  const body = await getObject({ bucket, key });
-  const content = body instanceof Buffer ? body.toString() : body; // cast from buffer if needed
-  if (typeof content !== 'string')
-    throw new Error('can not get object as json, object is not string');
-  return content;
+}): Promise<string | null> => {
+  try {
+    const { Body } = await s3.send(
+      new GetObjectCommand({ Bucket: bucket, Key: key }),
+    );
+    if (!Body) return null;
+    return await Body.transformToString('utf-8'); // sdk adds this at runtime on both node (Readable) and browser (ReadableStream)
+  } catch (err: any) {
+    if (err?.name === 'NoSuchKey' || err?.$metadata?.httpStatusCode === 404)
+      throw new Error(
+        `could not find object in s3 in bucket '${bucket}' with key '${key}'`,
+      );
+
+    throw err;
+  }
 };

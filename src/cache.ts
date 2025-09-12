@@ -5,7 +5,7 @@ import { promises as fs } from 'fs';
 import { toHashSha256Sync } from 'hash-fns';
 import { asSerialJSON, Serializable } from 'serde-fns';
 import { createCache as createInMemoryCache } from 'simple-in-memory-cache';
-import { isAFunction, withNot } from 'type-fns';
+import { isAFunction, isPresent, withNot } from 'type-fns';
 
 import { assertIsValidOnDiskCacheKey } from './key/assertIsValidOnDiskCacheKey';
 import { s3 } from './utils/s3';
@@ -242,7 +242,7 @@ export const createCache = ({
       directory: directoryToPersistTo,
       key,
     });
-    if (cacheContentSerialized === undefined) return undefined; // if not in cache, then undefined
+    if (!isPresent(cacheContentSerialized)) return undefined; // if not in cache, then undefined
     try {
       const cacheContent = JSON.parse(cacheContentSerialized);
       if (isRecordExpired(cacheContent)) return undefined; // if already expired, then undefined

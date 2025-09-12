@@ -59,9 +59,9 @@
     "postinstall": "[ -d .git ] && npx husky install || exit 0"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.887.0",
     "@ehmpathy/error-fns": "1.0.2",
     "@ehmpathy/uni-time": "^1.4.0",
-    "aws-sdk": "^2.1231.0",
     "bottleneck": "^2.19.5",
     "hash-fns": "^1.0.1",
     "serde-fns": "^1.2.0",
