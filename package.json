@@ -2,7 +2,7 @@
   "name": "simple-on-disk-cache",
   "author": "ehmpathy",
   "description": "A simple on-disk cache, supporting local and remote filesystem targets, with time based expiration policies.",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "repository": "ehmpathy/simple-on-disk-cache",
   "homepage": "https://github.com/ehmpathy/simple-on-disk-cache",
   "keywords": [

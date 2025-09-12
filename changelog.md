@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.7.1](https://github.com/ehmpathy/simple-on-disk-cache/compare/v1.7.0...v1.7.1) (2025-09-12)
+
+
+### Bug Fixes
+
+* **cicd:** ensure region ([17ba7bb](https://github.com/ehmpathy/simple-on-disk-cache/commit/17ba7bb618f208b542f036d0abb08ddbe84e924c))
+* **deps:** bump from aws-sdk v2 to v3 ([99c9d0d](https://github.com/ehmpathy/simple-on-disk-cache/commit/99c9d0d32c6165e050a4ab33a2d26aab6a959410))
+* **practs:** bump to latest best ([1837ea1](https://github.com/ehmpathy/simple-on-disk-cache/commit/1837ea15af01013a74486b1f494db9eb24c02003))
+
 ## [1.7.0](https://github.com/ehmpathy/simple-on-disk-cache/compare/v1.6.0...v1.7.0) (2024-12-26)
 
 
