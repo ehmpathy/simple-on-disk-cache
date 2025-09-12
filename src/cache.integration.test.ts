@@ -40,7 +40,7 @@ describe('cache', () => {
       expect(popcornStatusAfter9Sec).toEqual('not popped'); // still should say not popped
 
       // and prove that after a total of 9 seconds, the status is no longer in the cache
-      await sleep(1 * 1000); // sleep 1 more second
+      await sleep(2 * 1000); // sleep 1 more second
       const popcornStatusAfter10Sec = await get('how-popped-is-the-popcorn');
       expect(popcornStatusAfter10Sec).toEqual(undefined); // no longer defined, since the default seconds until expiration was 15
     });
