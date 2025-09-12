@@ -7,10 +7,11 @@ on:
         type: string
         description: the aws region within which we should run the tests
         required: false
-    secrets:
       aws-account-id:
-        required: false
+        type: string
         description: the id of the account the credentials are expected to access
+        required: false
+    secrets:
       aws-access-key-id:
         required: false
         description: required credentials to authenticate with aws the aws account against which to run the tests
@@ -19,38 +20,13 @@ on:
         description: required credentials to authenticate with aws the aws account against which to run the tests
 
 jobs:
+  # install the dependencies
   install:
-    runs-on: ubuntu-latest
-    steps:
-      - name: checkout
-        uses: actions/checkout@v3
-
-      - name: set node-version
-        uses: actions/setup-node@v3
-        with:
-          node-version-file: '.nvmrc'
-
-      - name: node-modules cache get
-        uses: actions/cache/restore@v3
-        id: cache
-        with:
-          path: ./node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-
-      - name: node-modules cache miss install
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: npm ci --ignore-scripts --prefer-offline --no-audit
-
-      - name: node-modules cache set
-        if: steps.cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v3
-        with:
-          path: ./node_modules
-          key: ${{ steps.cache.outputs.cache-primary-key }}
+    uses: ./.github/workflows/.install.yml
 
   # run tests in parallel
   test-commits:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [install]
     steps:
       - name: checkout
@@ -64,16 +40,16 @@ jobs:
           node-version-file: '.nvmrc'
 
       - name: get node-modules from cache
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@v4
         with:
           path: ./node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ needs.install.outputs.node-modules-cache-key }}
 
       - name: test:commits
         run: npm run test:commits
 
   test-types:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [install]
     steps:
       - name: checkout
@@ -85,37 +61,40 @@ jobs:
           node-version-file: '.nvmrc'
 
       - name: get node-modules from cache
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@v4
         with:
           path: ./node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ needs.install.outputs.node-modules-cache-key }}
 
       - name: test:types
         run: npm run test:types
 
   test-format:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [install]
     steps:
       - name: checkout
         uses: actions/checkout@v3
 
-      - name: set node-version
+      - name: set node version
         uses: actions/setup-node@v3
         with:
           node-version-file: '.nvmrc'
 
+      - name: set terraform version
+        uses: hashicorp/setup-terraform@v3
+
       - name: get node-modules from cache
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@v4
         with:
           path: ./node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ needs.install.outputs.node-modules-cache-key }}
 
       - name: test:format
         run: npm run test:format
 
   test-lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [install]
     steps:
       - name: checkout
@@ -127,16 +106,16 @@ jobs:
           node-version-file: '.nvmrc'
 
       - name: get node-modules from cache
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@v4
         with:
           path: ./node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ needs.install.outputs.node-modules-cache-key }}
 
       - name: test:lint
         run: npm run test:lint
 
   test-unit:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [install]
     steps:
       - name: checkout
@@ -148,16 +127,16 @@ jobs:
           node-version-file: '.nvmrc'
 
       - name: get node-modules from cache
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@v4
         with:
           path: ./node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ needs.install.outputs.node-modules-cache-key }}
 
       - name: test:unit
         run: THOROUGH=true npm run test:unit
 
   test-integration:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [install]
     steps:
       - name: checkout
@@ -169,13 +148,13 @@ jobs:
           node-version-file: '.nvmrc'
 
       - name: get node-modules from cache
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@v4
         with:
           path: ./node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ needs.install.outputs.node-modules-cache-key }}
 
       - name: configure aws credentials
-        if: "${{ inputs.aws-region != '' }}"
+        if: "${{ inputs.aws-account-id != '' }}"
         uses: aws-actions/configure-aws-credentials@v1
         id: credentials
         with:
@@ -184,9 +163,9 @@ jobs:
           aws-region: ${{ inputs.aws-region }}
 
       - name: confirm aws credentials
-        if: "${{ inputs.aws-region != '' }}"
+        if: "${{ inputs.aws-account-id != '' }}"
         run: |
-          [[ ${{steps.credentials.outputs.aws-account-id}} != ${{ secrets.aws-account-id }} ]] \
+          [[ ${{steps.credentials.outputs.aws-account-id}} != ${{ inputs.aws-account-id }} ]] \
             && echo 'wrong aws account' && exit 1 \
             || echo 'correct aws account';
 
@@ -197,7 +176,7 @@ jobs:
         run: THOROUGH=true npm run test:integration
 
   test-acceptance-locally:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [install]
     steps:
       - name: checkout
@@ -209,13 +188,13 @@ jobs:
           node-version-file: '.nvmrc'
 
       - name: get node-modules from cache
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@v4
         with:
           path: ./node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ needs.install.outputs.node-modules-cache-key }}
 
       - name: configure aws credentials
-        if: "${{ inputs.aws-region != '' }}"
+        if: "${{ inputs.aws-account-id != '' }}"
         uses: aws-actions/configure-aws-credentials@v1
         id: credentials
         with:
@@ -224,9 +203,9 @@ jobs:
           aws-region: ${{ inputs.aws-region }}
 
       - name: confirm aws credentials
-        if: "${{ inputs.aws-region != '' }}"
+        if: "${{ inputs.aws-account-id != '' }}"
         run: |
-          [[ ${{steps.credentials.outputs.aws-account-id}} != ${{ secrets.aws-account-id }} ]] \
+          [[ ${{steps.credentials.outputs.aws-account-id}} != ${{ inputs.aws-account-id }} ]] \
             && echo 'wrong aws account' && exit 1 \
             || echo 'correct aws account';
 

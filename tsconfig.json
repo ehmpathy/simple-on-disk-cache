@@ -10,7 +10,7 @@
     "resolveJsonModule": true,
     "sourceMap": true,
     "outDir": "dist",
-    "target": "es6"
+    "target": "es2020"
   },
   "extends": "@tsconfig/node-lts-strictest/tsconfig.json",
   "include": [
