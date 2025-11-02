@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.2](https://github.com/ehmpathy/simple-on-disk-cache/compare/v1.7.1...v1.7.2) (2025-11-02)
+
+
+### Bug Fixes
+
+* **deps:** bump to latest hash-fns ([cf46a5c](https://github.com/ehmpathy/simple-on-disk-cache/commit/cf46a5caa69877006ec7e87271ba05607af226de))
+
 ## [1.7.1](https://github.com/ehmpathy/simple-on-disk-cache/compare/v1.7.0...v1.7.1) (2025-09-12)
 
 
