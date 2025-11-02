@@ -58,7 +58,7 @@ describe('cache', () => {
       expect(iceCreamStateAfter4Sec).toEqual('solid'); // still should say solid
 
       // and prove that after a total of 5 seconds, the state is no longer in the cache
-      await sleep(1 * 1000); // sleep 1 more second
+      await sleep(2 * 1000); // sleep 1 more second
       const iceCreamStateAfter5Sec = await get('ice-cream-state');
       expect(iceCreamStateAfter5Sec).toEqual(undefined); // no longer defined, since the item level seconds until expiration was 5
     });

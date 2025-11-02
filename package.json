@@ -64,7 +64,7 @@
     "@ehmpathy/error-fns": "1.0.2",
     "@ehmpathy/uni-time": "^1.4.0",
     "bottleneck": "^2.19.5",
-    "hash-fns": "^1.0.1",
+    "hash-fns": "^1.1.0",
     "serde-fns": "^1.2.0",
     "simple-in-memory-cache": "^0.4.0",
     "type-fns": "^1.19.0"

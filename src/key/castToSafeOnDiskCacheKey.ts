@@ -1,4 +1,4 @@
-import { toHashSha256Sync } from 'hash-fns';
+import { asHashSha256Sync } from 'hash-fns';
 import { asSerialJSON, Serializable } from 'serde-fns';
 
 /**
@@ -52,11 +52,11 @@ export const castToSafeOnDiskCacheKey = <TInput extends Serializable>(input: {
       .replace(/_$/, ''), // stringify + replace all non-alphanumeric input,
 
     // then, suffix with a unique id of the input + prompt
-    toHashSha256Sync(
+    asHashSha256Sync(
       asSerialJSON([
         input.execution.input,
         input.procedure.version
-          ? toHashSha256Sync(input.procedure.version)
+          ? asHashSha256Sync(input.procedure.version)
           : null,
       ]),
     ),
