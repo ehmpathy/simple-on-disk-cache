@@ -4,7 +4,7 @@ on:
   workflow_call:
   push:
     branches-ignore:
-      - 'main' # exclude main branch, since deploy workflow triggers on main, and calls the test workflow inside of it already
+      - "main" # exclude main branch, since deploy workflow triggers on main, and calls the test workflow inside of it already
     tags-ignore:
       - v* # exclude tags, since deploy workflow triggers on tags, and calls the test workflow inside of it already
 
