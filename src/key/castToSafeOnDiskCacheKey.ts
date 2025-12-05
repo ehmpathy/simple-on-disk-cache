@@ -1,5 +1,5 @@
 import { asHashSha256Sync } from 'hash-fns';
-import { asSerialJSON, Serializable } from 'serde-fns';
+import { asSerialJSON, type Serializable } from 'serde-fns';
 
 /**
  * .what = casts details about the execution of a procedure into a safe on disk cache key

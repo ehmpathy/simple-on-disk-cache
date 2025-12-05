@@ -184,6 +184,33 @@ describe('cache', () => {
       expect(keys4.length).toEqual(1);
       expect(keys4[0]).toEqual('purpose-of-life');
     });
+    it('should return undefined when valid keys says a key exists but the cache file was deleted externally', async () => {
+      // create the cache and set a value
+      const cacheFirst = createCache({ directory: directoryToPersistTo });
+      await cacheFirst.set('schrodingers-cat', 'alive');
+
+      // verify it's accessible
+      const catState = await cacheFirst.get('schrodingers-cat');
+      expect(catState).toEqual('alive');
+
+      // verify the key is in the valid keys
+      const keys1 = await cacheFirst.keys();
+      expect(keys1).toContain('schrodingers-cat');
+
+      // simulate external deletion of the cache file (e.g., S3 object deleted, disk corruption, etc.)
+      await fs.unlink(`${directoryToPersistTo.mounted.path}/schrodingers-cat`);
+
+      // create a new cache instance to clear the in-memory cache
+      const cacheSecond = createCache({ directory: directoryToPersistTo });
+
+      // the key should still be in valid keys (since we didn't update that file)
+      const keys2 = await cacheSecond.keys();
+      expect(keys2).toContain('schrodingers-cat');
+
+      // but getting the value should return undefined since the file doesn't exist
+      const catStateAfterDeletion = await cacheSecond.get('schrodingers-cat');
+      expect(catStateAfterDeletion).toEqual(undefined);
+    });
     it('should prevent redundant disk.reads to maximize speed', async () => {
       // clear out the old keys, so that other tests dont affect the keycounting we want to do here
       await fs.unlink(
