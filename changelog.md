@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.3](https://github.com/ehmpathy/simple-on-disk-cache/compare/v1.7.2...v1.7.3) (2025-12-05)
+
+
+### Bug Fixes
+
+* **practs:** bump to latest best ([#22](https://github.com/ehmpathy/simple-on-disk-cache/issues/22)) ([28aba13](https://github.com/ehmpathy/simple-on-disk-cache/commit/28aba131a76d2d663fb0cc2554886ca92371785d))
+
 ## [1.7.2](https://github.com/ehmpathy/simple-on-disk-cache/compare/v1.7.1...v1.7.2) (2025-11-02)
 
 
