@@ -5,4 +5,11 @@ extends:
   - .agent/repo=ehmpathy/role=mechanic/keyrack.yml
 env.prod: null
 env.prep: null
-env.test: null
+env.test:
+  # aws credentials for s3 integration tests
+  AWS_ACCESS_KEY_ID:
+    from: secret://DEV_AWS_ACCESS_KEY_ID
+  AWS_SECRET_ACCESS_KEY:
+    from: secret://DEV_AWS_SECRET_ACCESS_KEY
+  AWS_REGION:
+    value: us-east-1
