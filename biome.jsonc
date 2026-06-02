@@ -8,12 +8,13 @@
   "files": {
     "includes": [
       "**/src/**/*.ts",
+      "**/provision/**/*.ts",
       "!**/dist",
       "!**/coverage",
       "!**/node_modules",
       "!**/.artifact",
-      "!**/.generated/**",
-      "!**/.test*/**"
+      "!**/.generated",
+      "!**/.test*"
     ]
   },
   "formatter": {
@@ -31,7 +32,20 @@
   "assist": {
     "actions": {
       "source": {
-        "organizeImports": "on"
+        "organizeImports": {
+          "level": "on",
+          "options": {
+            "groups": [
+              ":SIDE_EFFECT:",
+              ":BLANK_LINE:",
+              [":PACKAGE:", "!@src", "!@src/**"],
+              ":BLANK_LINE:",
+              ["@src", "@src/**"],
+              ":BLANK_LINE:",
+              ":RELATIVE:"
+            ]
+          }
+        }
       }
     }
   },
@@ -40,7 +54,11 @@
     "rules": {
       "recommended": true,
       "complexity": {
-        "noExcessiveCognitiveComplexity": "warn"
+        "noExcessiveCognitiveComplexity": "warn",
+        "noThisInStatic": {
+          "level": "warn", // warn w/o autofix, since some usecases like polymorphism require `this` in static methods
+          "fix": "none"
+        }
       },
       "correctness": {
         "noUnusedImports": {
@@ -65,7 +83,8 @@
         "noEmptyBlockStatements": "off",
         "noUnsafeDeclarationMerging": "off",
         "useIterableCallbackReturn": "warn",
-        "noDuplicateTestHooks": "off"
+        "noDuplicateTestHooks": "off",
+        "noThenProperty": "warn"
       },
       "nursery": {
         "noFloatingPromises": "error",
