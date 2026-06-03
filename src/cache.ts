@@ -111,7 +111,7 @@ const readFromDisk = async ({
         key: [directory.s3.prefix, key].join('/'),
       })
       .catch((error) => {
-        if (error.message.includes('Could not find object in s3 in bucket'))
+        if (error.message.includes('could not find object in s3 in bucket'))
           return undefined;
         throw error;
       });
