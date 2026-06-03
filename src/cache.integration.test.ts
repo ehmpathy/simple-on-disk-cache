@@ -261,7 +261,7 @@ describe('cache', () => {
   describe('s3', () => {
     const directoryToPersistTo = {
       s3: {
-        bucket: 'ehmpathy-simple-on-disk-cache-demo-bucket',
+        bucket: 'ehmpathy-simple-on-disk-cache-test-bucket',
         prefix: 'test/integration/s3',
       },
     };
