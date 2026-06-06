@@ -1,13 +1,14 @@
 import { sleep } from '@ehmpathy/uni-time';
 import { promises as fs } from 'fs';
+import { sdkAwsS3 } from 'sdk-aws-s3';
 
 import { createCache, RESERVED_CACHE_KEY_FOR_VALID_KEYS } from './cache';
 
 jest.setTimeout(60 * 1000);
 
 describe('cache', () => {
-  describe('mounted', () => {
-    const directoryToPersistTo = { mounted: { path: `${__dirname}/__tmp__` } };
+  describe('local', () => {
+    const directoryToPersistTo = { local: { path: `${__dirname}/__tmp__` } };
     it('should be able to add an item to the cache', async () => {
       const { set } = createCache({ directory: directoryToPersistTo });
       await set('meaning-of-life', '42');
@@ -99,7 +100,7 @@ describe('cache', () => {
 
       // check that in the file it was json parsed before stringified
       const contents = await fs.readFile(
-        [directoryToPersistTo.mounted.path, key].join('/'),
+        [directoryToPersistTo.local.path, key].join('/'),
         {
           encoding: 'utf-8',
         },
@@ -130,7 +131,7 @@ describe('cache', () => {
 
       // prove nothing was set into the cache for this key
       const fileExists = await await fs
-        .readFile([directoryToPersistTo.mounted.path, key].join('/'), {
+        .readFile([directoryToPersistTo.local.path, key].join('/'), {
           encoding: 'utf-8',
         })
         .then(() => true)
@@ -152,7 +153,7 @@ describe('cache', () => {
     it('should keep accurate track of keys', async () => {
       // clear out the old keys, so that other tests dont affect the keycounting we want to do here
       await fs.unlink(
-        `${directoryToPersistTo.mounted.path}/${RESERVED_CACHE_KEY_FOR_VALID_KEYS}`,
+        `${directoryToPersistTo.local.path}/${RESERVED_CACHE_KEY_FOR_VALID_KEYS}`,
       );
 
       // create the cache
@@ -198,7 +199,7 @@ describe('cache', () => {
       expect(keys1).toContain('schrodingers-cat');
 
       // simulate external deletion of the cache file (e.g., S3 object deleted, disk corruption, etc.)
-      await fs.unlink(`${directoryToPersistTo.mounted.path}/schrodingers-cat`);
+      await fs.unlink(`${directoryToPersistTo.local.path}/schrodingers-cat`);
 
       // create a new cache instance to clear the in-memory cache
       const cacheSecond = createCache({ directory: directoryToPersistTo });
@@ -214,7 +215,7 @@ describe('cache', () => {
     it('should prevent redundant disk.reads to maximize speed', async () => {
       // clear out the old keys, so that other tests dont affect the keycounting we want to do here
       await fs.unlink(
-        `${directoryToPersistTo.mounted.path}/${RESERVED_CACHE_KEY_FOR_VALID_KEYS}`,
+        `${directoryToPersistTo.local.path}/${RESERVED_CACHE_KEY_FOR_VALID_KEYS}`,
       );
 
       // spy on the readFile api
@@ -258,11 +259,11 @@ describe('cache', () => {
       expect(readFileSpy).toHaveBeenCalledTimes(3);
     });
   });
-  describe('s3', () => {
+  describe('cloud', () => {
     const directoryToPersistTo = {
-      s3: {
-        bucket: 'ehmpathy-simple-on-disk-cache-test-bucket',
-        prefix: 'test/integration/s3',
+      cloud: {
+        path: 's3://ehmpathy-simple-on-disk-cache-test-bucket/test/integration/s3/',
+        via: sdkAwsS3,
       },
     };
     it('should be able to add an item to the cache', async () => {
@@ -329,6 +330,18 @@ describe('cache', () => {
       await set('what-do-you-call-a-fake-noodle', 'an-impasta');
       const answer = await get('what-do-you-call-a-fake-noodle');
       expect(answer).toEqual('an-impasta');
+    });
+    it('should handle cloud path without terminal slash', async () => {
+      const directoryWithoutSlash = {
+        cloud: {
+          path: 's3://ehmpathy-simple-on-disk-cache-test-bucket/test/integration/s3', // no terminal slash
+          via: sdkAwsS3,
+        },
+      };
+      const { set, get } = createCache({ directory: directoryWithoutSlash });
+      await set('slash-test', 'works');
+      const value = await get('slash-test');
+      expect(value).toEqual('works');
     });
   });
 });

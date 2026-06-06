@@ -6,4 +6,3 @@
 exclude:
   - bottleneck
   - '@aws-crypto'
-  - '@aws-sdk'

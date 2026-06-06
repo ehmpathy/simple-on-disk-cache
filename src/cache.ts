@@ -6,7 +6,6 @@ import { createCache as createInMemoryCache } from 'simple-in-memory-cache';
 import { isAFunction, isPresent, withNot } from 'type-fns';
 
 import { assertIsValidOnDiskCacheKey } from './key/assertIsValidOnDiskCacheKey';
-import { s3 } from './utils/s3';
 
 const updateKeyFileBottleneck = new Bottleneck({ maxConcurrent: 1 });
 
@@ -43,25 +42,74 @@ interface KeyWithMetadata {
 }
 
 /**
- * the directory to persist your cache to can be either locally mounted or remote
+ * adapter for cloud storage backends
  *
- * supported remote options:
- * - AWS S3
+ * .what = interface for storage SDKs that understand URI paths
+ * .why = enables symmetric `{ path, via }` config for any cloud provider
+ */
+export type SimpleOnDiskCacheCloudAdapter = {
+  /**
+   * get a value by URI
+   *
+   * supports both:
+   * - `get: { one: (input) => ... }` (namespace style, e.g., sdkAwsS3)
+   * - `get: (input) => ...` (direct function style)
+   *
+   * @returns the value as a string, or null if not found (must NOT throw on not-found)
+   */
+  get:
+    | { one: (input: { uri: string }) => Promise<string | null> }
+    | ((input: { uri: string }) => Promise<string | null>);
+
+  /**
+   * set a value by URI
+   */
+  set: (input: { uri: string; body: string }) => Promise<void>;
+};
+
+/**
+ * the directory to persist your cache to can be either local or cloud
  */
 export type DirectoryToPersistTo =
-  | { mounted: { path: string } }
-  | { s3: { bucket: string; prefix: string } };
+  | { local: { path: string } }
+  | { cloud: { path: string; via: SimpleOnDiskCacheCloudAdapter } };
 
-const isMountedDirectory = (
+const isLocalDirectory = (
   directory: DirectoryToPersistTo,
-): directory is { mounted: { path: string } } =>
-  !!(directory as any)?.mounted?.path;
-const isS3Directory = (
+): directory is { local: { path: string } } =>
+  !!(directory as any)?.local?.path;
+const isCloudDirectory = (
   directory: DirectoryToPersistTo,
-): directory is { s3: { bucket: string; prefix: string } } =>
-  !!(directory as any)?.s3?.bucket;
+): directory is {
+  cloud: { path: string; via: SimpleOnDiskCacheCloudAdapter };
+} => !!(directory as any)?.cloud?.path && !!(directory as any)?.cloud?.via;
 
 const getMseNow = () => new Date().getTime();
+
+/**
+ * cast a cloud path and key to a cache URI
+ *
+ * .what = combines base path and key with consistent `/` separator
+ * .why = handles paths with or without terminal slash
+ */
+const asCacheUri = ({ path, key }: { path: string; key: string }): string => {
+  const basePath = path.replace(/\/$/, ''); // strip terminal slash if present
+  return [basePath, key].join('/');
+};
+
+/**
+ * invoke the adapter's get method, dispatches to either namespace or direct function style
+ */
+const invokeAdapterGet = async ({
+  adapter,
+  uri,
+}: {
+  adapter: SimpleOnDiskCacheCloudAdapter;
+  uri: string;
+}): Promise<string | null> => {
+  if (typeof adapter.get === 'function') return adapter.get({ uri });
+  return adapter.get.one({ uri });
+};
 
 const saveToDisk = async ({
   directory,
@@ -72,19 +120,20 @@ const saveToDisk = async ({
   key: string;
   value: string;
 }) => {
-  if (isMountedDirectory(directory))
-    return await fs.writeFile([directory.mounted.path, key].join('/'), value, {
-      flag: 'w',
-      encoding: 'utf-8',
+  if (isLocalDirectory(directory))
+    return await fs.writeFile(
+      asCacheUri({ path: directory.local.path, key }),
+      value,
+      { flag: 'w', encoding: 'utf-8' },
+    );
+  if (isCloudDirectory(directory)) {
+    return await directory.cloud.via.set({
+      uri: asCacheUri({ path: directory.cloud.path, key }),
+      body: value,
     });
-  if (isS3Directory(directory))
-    return await s3.putObject({
-      bucket: directory.s3.bucket,
-      key: [directory.s3.prefix, key].join('/'),
-      data: value,
-    });
+  }
   throw new UnexpectedCodePathError(
-    'directory was neither mounted or s3. unsupported',
+    'directory was neither local or cloud. unsupported',
   );
 };
 
@@ -95,28 +144,25 @@ const readFromDisk = async ({
   directory: DirectoryToPersistTo;
   key: string;
 }) => {
-  if (isMountedDirectory(directory))
+  if (isLocalDirectory(directory))
     return await fs
-      .readFile([directory.mounted.path, key].join('/'), {
+      .readFile(asCacheUri({ path: directory.local.path, key }), {
         encoding: 'utf-8',
       })
       .catch((error) => {
         if (error.code === 'ENOENT') return undefined; // file not found error => never cached
         throw error; // otherwise, something else is messed up
       });
-  if (isS3Directory(directory))
-    return await s3
-      .getObjectAsString({
-        bucket: directory.s3.bucket,
-        key: [directory.s3.prefix, key].join('/'),
-      })
-      .catch((error) => {
-        if (error.message.includes('could not find object in s3 in bucket'))
-          return undefined;
-        throw error;
-      });
+  if (isCloudDirectory(directory)) {
+    // adapter returns null for not-found, we convert to undefined
+    const result = await invokeAdapterGet({
+      adapter: directory.cloud.via,
+      uri: asCacheUri({ path: directory.cloud.path, key }),
+    });
+    return result ?? undefined;
+  }
   throw new UnexpectedCodePathError(
-    'directory was neither mounted or s3. unsupported',
+    'directory was neither local or cloud. unsupported',
   );
 };
 
@@ -171,8 +217,8 @@ export const createCache = ({
 
   // kick off creating the directory if it doesn't already exist, to prevent usage errors
   void promiseDirectoryToPersistTo.then(async (directoryToPersistTo) => {
-    if (isMountedDirectory(directoryToPersistTo))
-      await fs.mkdir(directoryToPersistTo.mounted.path, { recursive: true });
+    if (isLocalDirectory(directoryToPersistTo))
+      await fs.mkdir(directoryToPersistTo.local.path, { recursive: true });
   });
 
   /**
