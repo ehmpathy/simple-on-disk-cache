@@ -310,15 +310,15 @@ describe('cache', () => {
       const iceCreamState = await get('ice-cream-state');
       expect(iceCreamState).toEqual('solid');
 
-      // prove that the value is still accessible after 4 seconds, since default ttl is 5 seconds
+      // prove that the value is still accessible after 3 seconds, since default ttl is 5 seconds
       await sleep(3 * 1000);
-      const iceCreamStateAfter4Sec = await get('ice-cream-state');
-      expect(iceCreamStateAfter4Sec).toEqual('solid'); // still should say solid
+      const iceCreamStateAfter3Sec = await get('ice-cream-state');
+      expect(iceCreamStateAfter3Sec).toEqual('solid'); // still should say solid
 
-      // and prove that after a total of 5 seconds, the state is no longer in the cache
-      await sleep(2 * 1000); // sleep 2 more second
-      const iceCreamStateAfter5Sec = await get('ice-cream-state');
-      expect(iceCreamStateAfter5Sec).toEqual(undefined); // no longer defined, since the item level seconds until expiration was 5
+      // and prove that after a total of 6 seconds, the state is no longer in the cache
+      await sleep(3 * 1000); // sleep 3 more seconds (buffer for s3 latency)
+      const iceCreamStateAfter6Sec = await get('ice-cream-state');
+      expect(iceCreamStateAfter6Sec).toEqual(undefined); // no longer defined, since the item level seconds until expiration was 5
     });
     it('should return undefined if a key has never been cached', async () => {
       const { get } = createCache({ directory: directoryToPersistTo });
