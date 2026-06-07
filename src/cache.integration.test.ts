@@ -1,4 +1,4 @@
-import { sleep, toMilliseconds, UniDuration } from '@ehmpathy/uni-time';
+import { sleep, toMilliseconds, type UniDuration } from '@ehmpathy/uni-time';
 import { promises as fs } from 'fs';
 import { sdkAwsS3 } from 'sdk-aws-s3';
 
