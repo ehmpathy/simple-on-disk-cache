@@ -1,8 +1,23 @@
-import { sleep } from '@ehmpathy/uni-time';
+import { sleep, toMilliseconds, UniDuration } from '@ehmpathy/uni-time';
 import { promises as fs } from 'fs';
 import { sdkAwsS3 } from 'sdk-aws-s3';
 
 import { createCache, RESERVED_CACHE_KEY_FOR_VALID_KEYS } from './cache';
+
+/**
+ * create a timer that tracks time left until target
+ *
+ * .why = ensures we check at exact times from TTL start, regardless of S3 latency
+ */
+const genTimer = (input: { for: UniDuration }) => {
+  const startedAtMse = Date.now();
+  const targetMse = startedAtMse + toMilliseconds(input.for);
+  return {
+    get: () => ({
+      left: { milliseconds: Math.max(0, targetMse - Date.now()) },
+    }),
+  };
+};
 
 jest.setTimeout(60 * 1000);
 
@@ -286,37 +301,45 @@ describe('cache', () => {
         directory: directoryToPersistTo,
         expiration: { seconds: 10 },
       }); // we're gonna use this cache to keep track of the popcorn in the microwave - we should check more regularly since it changes quickly!
+
+      // create timers before set() so they track from TTL start, not set() return
+      const timer8s = genTimer({ for: { seconds: 8 } });
+      const timer10s = genTimer({ for: { seconds: 10 } });
       await set('how-popped-is-the-popcorn', 'not popped');
 
-      // prove that we recorded the value and its accessible immediately after setting
+      // prove that we recorded the value and its accessible immediately after set
       const popcornStatus = await get('how-popped-is-the-popcorn');
       expect(popcornStatus).toEqual('not popped');
 
-      // prove that the value is still accessible after 8 seconds, since default ttl is 10 seconds
-      await sleep(8 * 1000);
+      // prove that the value is still accessible after 8 seconds from TTL start
+      await sleep(timer8s.get().left.milliseconds);
       const popcornStatusAfter9Sec = await get('how-popped-is-the-popcorn');
       expect(popcornStatusAfter9Sec).toEqual('not popped'); // still should say not popped
 
-      // and prove that after a total of 10 seconds, the status is no longer in the cache
-      await sleep(2 * 1000); // sleep 2 more second
+      // and prove that after a total of 10 seconds from TTL start, the status is no longer in the cache
+      await sleep(timer10s.get().left.milliseconds); // 2 more seconds
       const popcornStatusAfter10Sec = await get('how-popped-is-the-popcorn');
-      expect(popcornStatusAfter10Sec).toEqual(undefined); // no longer defined, since the default seconds until expiration was 15
+      expect(popcornStatusAfter10Sec).toEqual(undefined); // no longer defined, since the default seconds until expiration was 10
     });
     it('should respect the item level expiration for the cache', async () => {
       const { set, get } = createCache({ directory: directoryToPersistTo }); // remember, default expiration is greater than 1 min
+
+      // create timers before set() so they track from TTL start, not set() return
+      const timer3s = genTimer({ for: { seconds: 3 } });
+      const timer6s = genTimer({ for: { seconds: 6 } });
       await set('ice-cream-state', 'solid', { expiration: { seconds: 5 } }); // ice cream changes quickly in the heat! lets keep a quick eye on this
 
-      // prove that we recorded the value and its accessible immediately after setting
+      // prove that we recorded the value and its accessible immediately after set
       const iceCreamState = await get('ice-cream-state');
       expect(iceCreamState).toEqual('solid');
 
-      // prove that the value is still accessible after 3 seconds, since default ttl is 5 seconds
-      await sleep(3 * 1000);
+      // prove that the value is still accessible after 3 seconds from TTL start
+      await sleep(timer3s.get().left.milliseconds);
       const iceCreamStateAfter3Sec = await get('ice-cream-state');
       expect(iceCreamStateAfter3Sec).toEqual('solid'); // still should say solid
 
-      // and prove that after a total of 6 seconds, the state is no longer in the cache
-      await sleep(3 * 1000); // sleep 3 more seconds (buffer for s3 latency)
+      // and prove that after a total of 6 seconds from TTL start, the state is no longer in the cache
+      await sleep(timer6s.get().left.milliseconds); // 3 more seconds
       const iceCreamStateAfter6Sec = await get('ice-cream-state');
       expect(iceCreamStateAfter6Sec).toEqual(undefined); // no longer defined, since the item level seconds until expiration was 5
     });

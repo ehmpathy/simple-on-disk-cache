@@ -377,16 +377,19 @@ export const createCache = ({
   };
 
   /**
-   * define how to set an item to the cache, with valid key tracking
+   * define how to set an item to the cache, with valid key tracked
    */
-  const setWithValidKeyTracking = async (
+  const setWithValidKeyTracked = async (
     ...args: Parameters<typeof set>
-  ): Promise<void> => {
+  ): Promise<KeyWithMetadata> => {
     // write to the cache
     const newKeyWithMetadata = await set(...args);
 
     // add the key as valid
     await updateKeyWithMetadataState({ for: newKeyWithMetadata });
+
+    // return metadata so caller can compute TTL left
+    return newKeyWithMetadata;
   };
 
   /**
@@ -449,11 +452,35 @@ export const createCache = ({
   const setWithMemory = async (
     ...args: Parameters<typeof set>
   ): Promise<void> => {
-    // set to disk
-    await setWithValidKeyTracking(...args);
+    // set to disk first, get the computed expiresAtMse
+    const { expiresAtMse } = await setWithValidKeyTracked(...args);
 
-    // set to memory
-    await cacheInMemory.set(...args);
+    /**
+     * set to memory with expiresAtMseLeft (TTL left from disk's perspective)
+     *
+     * .why = both caches must expire at the same absolute time
+     *
+     * without this, each cache computes its own expiresAt from getMseNow():
+     * - disk computes expiresAt at T=0
+     * - disk write takes ~2500ms (S3 latency)
+     * - memory computes expiresAt at T=2500
+     * - caches disagree by 2500ms
+     *
+     * with expiresAtMseLeft, memory uses the time left until disk's expiresAt:
+     * - disk computes expiresAt = 5000 at T=0
+     * - disk write completes at T=2500
+     * - expiresAtMseLeft = 5000 - 2500 = 2500
+     * - memory sets expiresAt = 2500 + 2500 = 5000
+     * - both expire at T=5000
+     */
+    const [key, value] = args;
+    const expiresAtMseLeft = expiresAtMse - getMseNow();
+    await cacheInMemory.set(key, value, {
+      expiration:
+        expiresAtMseLeft > 0
+          ? { milliseconds: expiresAtMseLeft }
+          : { milliseconds: 0 },
+    });
   };
 
   /**
