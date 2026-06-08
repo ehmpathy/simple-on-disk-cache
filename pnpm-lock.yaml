@@ -11,9 +11,6 @@ importers:
       '@ehmpathy/uni-time':
         specifier: ^1.4.0
         version: 1.9.1
-      bottleneck:
-        specifier: ^2.19.5
-        version: 2.19.5
       domain-objects:
         specifier: 0.31.9
         version: 0.31.9
@@ -32,6 +29,9 @@ importers:
       type-fns:
         specifier: 1.21.2
         version: 1.21.2
+      with-bottleneck:
+        specifier: 0.1.0
+        version: 0.1.0
     devDependencies:
       '@biomejs/biome':
         specifier: 2.3.8
@@ -5019,6 +5019,10 @@ packages:
     resolution: {integrity: sha512-BLI3Tl1TW3Pvl70l3yq3Y64i+awpwXqsGBYWkkqMtnbXgrMD+yj7rhW0kuEDxzJaYXGjEW5ogapKNMEKNMjibA==}
     engines: {node: '>= 8'}
     hasBin: true
+
+  with-bottleneck@0.1.0:
+    resolution: {integrity: sha512-047okd/iqNSyOaa5ka54NpvWThMtHDDRe3MO2VXKuUK3C3sNNheyBI8s+TFeUbqIpapw2rabOQbegEEWN6mLtw==}
+    engines: {node: '>=8.0.0'}
 
   with-simple-cache@0.15.1:
     resolution: {integrity: sha512-vaGOS8GikOyCEnmseWcX0xG/rcagv7gj/2PyFV1w2H3qnPZ3cfqt98GBWr/QCam+zHDglvUZ9hLyfYYZrMw7tg==}
@@ -11238,6 +11242,11 @@ snapshots:
   which@2.0.2:
     dependencies:
       isexe: 2.0.0
+
+  with-bottleneck@0.1.0:
+    dependencies:
+      helpful-errors: 1.5.3
+      iso-time: 1.11.7
 
   with-simple-cache@0.15.1:
     dependencies:
