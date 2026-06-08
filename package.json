@@ -2,7 +2,7 @@
   "name": "simple-on-disk-cache",
   "author": "ehmpathy",
   "description": "A simple on-disk cache, supporting local and remote filesystem targets, with time based expiration policies.",
-  "version": "1.7.8",
+  "version": "1.7.7",
   "repository": "ehmpathy/simple-on-disk-cache",
   "homepage": "https://github.com/ehmpathy/simple-on-disk-cache",
   "keywords": [
@@ -62,7 +62,7 @@
     "preversion": "npm run prepush",
     "postversion": "git push origin HEAD --tags --no-verify",
     "prepare:husky": "husky install && chmod ug+x .husky/*",
-    "prepare:rhachet": "rhachet init --hooks --roles mechanic behaver driver architect ergonomist reviewer dreamer dispatcher",
+    "prepare:rhachet": "rhachet init --keys --hooks --roles mechanic behaver driver reviewer librarian ergonomist architect",
     "prepare": "if [ -e .git ] && [ -z $CI ]; then npm run prepare:husky && npm run prepare:rhachet; fi",
     "test:lint:cycles": "dpdm --no-warning --no-tree --exit-code circular:1 --exclude \"$(yq -r '.exclude | join(\"|\") // \"^$\"' .dpdmrc.yaml)\" 'src/**/*.ts'",
     "upgrade:rhachet": "rhachet upgrade"
@@ -98,7 +98,7 @@
     "esbuild-register": "3.6.0",
     "husky": "8.0.3",
     "jest": "30.2.0",
-    "rhachet": "1.41.17",
+    "rhachet": "1.41.16",
     "rhachet-brains-anthropic": "0.4.1",
     "rhachet-brains-xai": "0.3.3",
     "rhachet-roles-bhrain": "0.28.0",
