@@ -1,8 +1,7 @@
 # dpdm exclude patterns
 # each entry is joined with | to form a single regex for --exclude
 #
-# exclude specific third-party packages with internal cycles
-# only exclude packages known to have internal cycles, not all node_modules
+# only exclude devDependencies here
+# if you exclude a prod dependency, you ship cycles to consumers and break their builds
 exclude:
-  - bottleneck
-  - '@aws-crypto'
+  - '@aws-crypto' # devDep via sdk-aws-s3, has internal cycles

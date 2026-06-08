@@ -12,6 +12,7 @@
       "!**/dist",
       "!**/coverage",
       "!**/node_modules",
+      "!**/.agent/.cache",
       "!**/.artifact",
       "!**/.generated",
       "!**/.test*"
