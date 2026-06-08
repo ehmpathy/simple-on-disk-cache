@@ -1,13 +1,13 @@
 import { toMilliseconds, type UniDuration } from '@ehmpathy/uni-time';
-import Bottleneck from 'bottleneck';
 import { promises as fs } from 'fs';
 import { UnexpectedCodePathError } from 'helpful-errors';
 import { createCache as createInMemoryCache } from 'simple-in-memory-cache';
 import { isAFunction, isPresent, withNot } from 'type-fns';
+import { genBottleneck } from 'with-bottleneck';
 
 import { assertIsValidOnDiskCacheKey } from './key/assertIsValidOnDiskCacheKey';
 
-const updateKeyFileBottleneck = new Bottleneck({ maxConcurrent: 1 });
+const updateKeyFileBottleneck = genBottleneck({ concurrency: 1 });
 
 export interface SimpleOnDiskCache {
   /**
