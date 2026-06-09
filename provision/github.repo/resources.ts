@@ -10,9 +10,13 @@ import {
 import { type DomainEntity, RefByUnique } from 'domain-objects';
 import { UnexpectedCodePathError } from 'helpful-errors';
 
-import pkg from '../../package.json';
+import pkgJson from '../../package.json';
 
-const pkgPrivate = (pkg as unknown as { private?: boolean }).private;
+const pkg = pkgJson as {
+  description?: string;
+  private?: boolean;
+  homepage?: string;
+};
 
 export const getProviders = async (): Promise<DeclastructProvider[]> => [
   getDeclastructGithubProvider(
@@ -40,8 +44,8 @@ export const getResources = async (): Promise<DomainEntity<any>[]> => {
     owner: 'ehmpathy',
     name: 'simple-on-disk-cache',
     description: pkg.description ?? null,
-    visibility: pkgPrivate === true ? 'private' : 'public',
-    private: pkgPrivate === true, // todo: why do we have to specify this twice?
+    visibility: pkg.private === true ? 'private' : 'public',
+    private: pkg.private ?? false, // todo: why do we have to specify this twice?
     homepage: pkg.homepage ?? null,
 
     // things we haven't changed from the defaults
