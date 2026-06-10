@@ -1,5 +1,5 @@
-import { sleep, toMilliseconds, type UniDuration } from '@ehmpathy/uni-time';
 import { promises as fs } from 'fs';
+import { type IsoDuration, sleep, toMilliseconds } from 'iso-time';
 import { sdkAwsS3 } from 'sdk-aws-s3';
 
 import { createCache, RESERVED_CACHE_KEY_FOR_VALID_KEYS } from './cache';
@@ -9,7 +9,7 @@ import { createCache, RESERVED_CACHE_KEY_FOR_VALID_KEYS } from './cache';
  *
  * .why = ensures we check at exact times from TTL start, regardless of S3 latency
  */
-const genTimer = (input: { for: UniDuration }) => {
+const genTimer = (input: { for: IsoDuration }) => {
   const startedAtMse = Date.now();
   const targetMse = startedAtMse + toMilliseconds(input.for);
   return {
