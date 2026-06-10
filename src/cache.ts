@@ -1,6 +1,6 @@
-import { toMilliseconds, type UniDuration } from '@ehmpathy/uni-time';
 import { promises as fs } from 'fs';
 import { UnexpectedCodePathError } from 'helpful-errors';
+import { type IsoDuration, toMilliseconds } from 'iso-time';
 import { createCache as createInMemoryCache } from 'simple-in-memory-cache';
 import { isAFunction, isPresent, withNot } from 'type-fns';
 import { genBottleneck } from 'with-bottleneck';
@@ -21,7 +21,7 @@ export interface SimpleOnDiskCache {
   set: (
     key: string,
     value: string | undefined | Promise<string | undefined>,
-    options?: { expiration?: UniDuration | null },
+    options?: { expiration?: IsoDuration | null },
   ) => Promise<void>;
 
   /**
@@ -208,7 +208,7 @@ export const createCache = ({
   /**
    * .what = how long to keep items cached until they expire, by default
    */
-  expiration?: UniDuration | null;
+  expiration?: IsoDuration | null;
 }): SimpleOnDiskCache => {
   // kick off a promise to get the directory to persist to
   const promiseDirectoryToPersistTo = resolveDirectoryToPersistTo(
@@ -229,7 +229,7 @@ export const createCache = ({
     value: string | undefined | Promise<string | undefined>,
     {
       expiration = defaultExpiration,
-    }: { expiration?: UniDuration | null } = {},
+    }: { expiration?: IsoDuration | null } = {},
   ): Promise<KeyWithMetadata> => {
     assertIsValidOnDiskCacheKey({ key });
     const expiresAtMse =
