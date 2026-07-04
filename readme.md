@@ -93,6 +93,34 @@ await cache.set('weather', 'sunny', { expiration: { hours: 1 } });
 await cache.set('gravity', '9.81', { expiration: null });
 ```
 
+### consistency
+
+by default, `.get` reads the source store (local disk / cloud) every time, so it always reflects the latest write — cross-process overwrites included. this is the correct, no-surprise default.
+
+```ts
+// default: source-first (correct)
+const cache = createCache({
+  directory: { local: { path: './cache' } },
+});
+```
+
+when one writer owns the store (single-writer, write-once, or immutable data), opt into `memory-first` for a per-hot-key perf win (~15ms disk / hundreds of ms cloud → ns). a memory hit short-circuits the source read:
+
+```ts
+// opt-in: memory-first (fast), for single-writer / write-once usecases
+const cache = createCache({
+  directory: { local: { path: './cache' } },
+  consistency: 'memory-first',
+});
+```
+
+on a memory-first cache, force a one-off source read with a per-read override. the read value wins over the cache-wide default, and leaves memory warm with the source value:
+
+```ts
+// per-read override: force a source read on a memory-first cache
+await cache.get('election-winner', { consistency: 'source-first' });
+```
+
 ### safe cache keys
 
 cache keys must be safe for filesystems (alphanumeric, `.`, `-`, `_` only). use `castToSafeOnDiskCacheKey` to generate safe keys from procedure inputs:
@@ -124,10 +152,15 @@ creates a cache instance.
 |--------|------|---------|-------------|
 | `directory` | `DirectoryToPersistTo` | required | where to persist cache files |
 | `expiration` | `UniDuration \| null` | `{ minutes: 5 }` | default TTL for items |
+| `consistency` | `SimpleOnDiskCacheConsistency` | `'source-first'` | read polarity: `'source-first'` reads the source store every time (correct); `'memory-first'` short-circuits on an in-process memory hit (fast, single-writer only) |
 
-### `cache.get(key)`
+### `cache.get(key, options?)`
 
 returns `Promise<string | undefined>`. returns `undefined` if not found or expired.
+
+| option | type | description |
+|--------|------|-------------|
+| `consistency` | `SimpleOnDiskCacheConsistency` | override the cache-wide consistency for this read; a per-read value wins over the cache default |
 
 ### `cache.set(key, value, options?)`
 
@@ -146,9 +179,18 @@ returns `Promise<string[]>`. lists all valid (non-expired) keys.
 ```ts
 import type {
   SimpleOnDiskCache,
+  SimpleOnDiskCacheConsistency,
   DirectoryToPersistTo,
   SimpleOnDiskCacheCloudAdapter,
 } from 'simple-on-disk-cache';
+```
+
+### `SimpleOnDiskCacheConsistency`
+
+read polarity for the cache:
+
+```ts
+type SimpleOnDiskCacheConsistency = 'source-first' | 'memory-first';
 ```
 
 ### `SimpleOnDiskCacheCloudAdapter`

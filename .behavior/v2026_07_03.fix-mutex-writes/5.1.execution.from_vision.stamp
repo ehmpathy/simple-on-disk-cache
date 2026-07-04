@@ -1,0 +1,71 @@
+🦉 the way speaks for itself
+
+🗿 route.stone.set
+   ├─ stone = 5.1.execution.from_vision
+   ├─ passage = overruled
+   ├─ guard
+   │  ├─ artifacts
+   │  │   ├─ $route/5.1.execution.from_vision.yield.md
+   │  │   └─ src/**/*
+   │  ├─ reviews
+   │  │   ├─ r1: repo-rules (l1, 0/3)
+   │  │   │   ├─ constraint 1.4s
+   │  │   │   ├─ 0 blockers ✓
+   │  │   │   ├─ 0 nitpicks ✓
+   │  │   │   └─ review: .behavior/v2026_07_03.fix-mutex-writes/.reviews/peer/5.1.execution.from_vision._.review.i5.6465ba6aad5c6264dc.r1._.given.by_peer.repo-rules.md
+   │  │   ├─ r2: mech-failhides (l1, 2/3)
+   │  │   │   ├─ approved, cached
+   │  │   │   ├─ 0 blockers ✓
+   │  │   │   ├─ 0 nitpicks ✓
+   │  │   │   └─ review: .behavior/v2026_07_03.fix-mutex-writes/.reviews/peer/5.1.execution.from_vision._.review.i4.6465ba6aad5c6264dc.r2._.given.by_peer.mech-failhides.md
+   │  │   ├─ r3: mech-decode-friction (l1, 2/3)
+   │  │   │   ├─ approved, cached
+   │  │   │   ├─ 0 blockers ✓
+   │  │   │   ├─ 0 nitpicks ✓
+   │  │   │   └─ review: .behavior/v2026_07_03.fix-mutex-writes/.reviews/peer/5.1.execution.from_vision._.review.i4.6465ba6aad5c6264dc.r3._.given.by_peer.mech-decode-friction.md
+   │  │   ├─ r4: arch-opport-decomposition (l1, 2/3)
+   │  │   │   ├─ approved, cached
+   │  │   │   ├─ 0 blockers ✓
+   │  │   │   ├─ 0 nitpicks ✓
+   │  │   │   └─ review: .behavior/v2026_07_03.fix-mutex-writes/.reviews/peer/5.1.execution.from_vision._.review.i4.6465ba6aad5c6264dc.r4._.given.by_peer.arch-opport-decomposition.md
+   │  │   ├─ r5: arch-smell-scopeleaks (l1, 2/3)
+   │  │   │   ├─ approved, cached
+   │  │   │   ├─ 0 blockers ✓
+   │  │   │   ├─ 0 nitpicks ✓
+   │  │   │   └─ review: .behavior/v2026_07_03.fix-mutex-writes/.reviews/peer/5.1.execution.from_vision._.review.i4.6465ba6aad5c6264dc.r5._.given.by_peer.arch-smell-scopeleaks.md
+   │  │   ├─ r6: arch-hazards-maintenance (l1, 2/3)
+   │  │   │   ├─ approved, cached
+   │  │   │   ├─ 0 blockers ✓
+   │  │   │   ├─ 0 nitpicks ✓
+   │  │   │   └─ review: .behavior/v2026_07_03.fix-mutex-writes/.reviews/peer/5.1.execution.from_vision._.review.i4.6465ba6aad5c6264dc.r6._.given.by_peer.arch-hazards-maintenance.md
+   │  │   ├─ r7: arch-hazards-behavior (l1, 2/3)
+   │  │   │   ├─ approved, cached
+   │  │   │   ├─ 0 blockers ✓
+   │  │   │   ├─ 0 nitpicks ✓
+   │  │   │   └─ review: .behavior/v2026_07_03.fix-mutex-writes/.reviews/peer/5.1.execution.from_vision._.review.i4.6465ba6aad5c6264dc.r7._.given.by_peer.arch-hazards-behavior.md
+   │  │   ├─ r8: behavior-intent-coverage (l1, 2/3)
+   │  │   │   ├─ approved, cached
+   │  │   │   ├─ 0 blockers ✓
+   │  │   │   ├─ 0 nitpicks ✓
+   │  │   │   └─ review: .behavior/v2026_07_03.fix-mutex-writes/.reviews/peer/5.1.execution.from_vision._.review.i4.6465ba6aad5c6264dc.r8._.given.by_peer.behavior-intent-coverage.md
+   │  │   ├─ r9: ergo-friction-hazards (l1, 2/3)
+   │  │   │   ├─ approved, cached
+   │  │   │   ├─ 0 blockers ✓
+   │  │   │   ├─ 0 nitpicks ✓
+   │  │   │   └─ review: .behavior/v2026_07_03.fix-mutex-writes/.reviews/peer/5.1.execution.from_vision._.review.i4.6465ba6aad5c6264dc.r9._.given.by_peer.ergo-friction-hazards.md
+   │  │   ├─ r10: enroll-impl-behavior-intent (l3, 2/3)
+   │  │   │   ├─ approved, cached
+   │  │   │   ├─ 0 blockers ✓
+   │  │   │   ├─ 0 nitpicks ✓
+   │  │   │   └─ review: .behavior/v2026_07_03.fix-mutex-writes/.reviews/peer/5.1.execution.from_vision._.review.i4.6465ba6aad5c6264dc.r10._.given.by_peer.enroll-impl-behavior-intent.md
+   │  │   └─ r11: enroll-impl-arch-defects (l3, 2/3)
+   │  │       ├─ approved, cached
+   │  │       ├─ 0 blockers ✓
+   │  │       ├─ 0 nitpicks ✓
+   │  │       └─ review: .behavior/v2026_07_03.fix-mutex-writes/.reviews/peer/5.1.execution.from_vision._.review.i4.6465ba6aad5c6264dc.r11._.given.by_peer.enroll-impl-arch-defects.md
+   │  └─ judges
+   │      └─ j1: $rhachet run --repo bhrain --skill route.stone.judge --mechanism reviewed? --stone $stone --route $route --allow-blockers 0 --allow-nitpicks 3
+   │          └─ finished 0.3s ✓
+   │
+   └─ the way continues, run
+      └─ rhx route.drive
