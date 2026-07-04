@@ -9,11 +9,26 @@ import { assertIsValidOnDiskCacheKey } from './key/assertIsValidOnDiskCacheKey';
 
 const updateKeyFileBottleneck = genBottleneck({ concurrency: 1 });
 
+/**
+ * .what = the read consistency policy for the cache
+ * .why =
+ * - source-first: read the source store every time; always reflects the latest write, cross-process overwrites included (correct)
+ * - memory-first: an in-process memory hit short-circuits the source read; fast, but can serve a stale value after a cross-process overwrite (single-writer usecases)
+ */
+export type SimpleOnDiskCacheConsistency = 'source-first' | 'memory-first';
+
 export interface SimpleOnDiskCache {
   /**
    * get a value from cache by key
+   *
+   * options.consistency overrides the cache-wide default for this read
+   * - e.g., force a source-first read on an otherwise memory-first cache
+   * - note: a source-first read on a memory-first cache also warms the in-memory copy with the fresh source value, so subsequent memory-first reads reflect it
    */
-  get: (key: string) => Promise<string | undefined>;
+  get: (
+    key: string,
+    options?: { consistency?: SimpleOnDiskCacheConsistency },
+  ) => Promise<string | undefined>;
 
   /**
    * set a value to cache for key
@@ -199,6 +214,7 @@ const resolveDirectoryToPersistTo = async (
 export const createCache = ({
   directory: directoryToPersistToInput,
   expiration: defaultExpiration = { minutes: 5 },
+  consistency: defaultConsistency = 'source-first',
 }: {
   /**
    * .what = the directory into which to persist the cache
@@ -209,6 +225,12 @@ export const createCache = ({
    * .what = how long to keep items cached until they expire, by default
    */
   expiration?: IsoDuration | null;
+
+  /**
+   * .what = the read consistency policy for the cache
+   * .why = source-first (default) always reflects the latest write; memory-first opts into speed for single-writer usecases
+   */
+  consistency?: SimpleOnDiskCacheConsistency;
 }): SimpleOnDiskCache => {
   // kick off a promise to get the directory to persist to
   const promiseDirectoryToPersistTo = resolveDirectoryToPersistTo(
@@ -427,33 +449,68 @@ export const createCache = ({
   >({
     expiration: defaultExpiration,
   });
-  const getWithMemory = async (
-    ...args: Parameters<typeof get>
-  ): ReturnType<typeof get> => {
+  const getWithMemory = async (key: string): ReturnType<typeof get> => {
     // check in memory, to prevent disk hits
-    const valueFoundInMemoryBefore = await cacheInMemory.get(...args);
+    const valueFoundInMemoryBefore = await cacheInMemory.get(key);
     if (valueFoundInMemoryBefore) return valueFoundInMemoryBefore;
 
     // if not in memory, then .get from disk
-    const valueFoundOnDisk = await getWithValidKeyTracking(...args);
+    const valueFoundOnDisk = await getWithValidKeyTracking(key);
     if (!valueFoundOnDisk) return undefined; // if not found on disk either, then defo undefined
 
     // since found on disk, set to in memory cache, for successful subsequent lookups
-    await cacheInMemory.set(args[0], valueFoundOnDisk);
+    await cacheInMemory.set(key, valueFoundOnDisk);
 
     // and get it from memory now, to ensure consistent output
-    const valueFoundInMemoryAfter = await cacheInMemory.get(...args);
+    const valueFoundInMemoryAfter = await cacheInMemory.get(key);
     if (!valueFoundInMemoryAfter)
       throw new UnexpectedCodePathError(
         'could not find value in memory after having been set',
+        { key, valueFoundOnDisk },
       );
     return valueFoundInMemoryAfter;
   };
-  const setWithMemory = async (
+
+  /**
+   * define how to get an item from the cache, per the effective read consistency
+   *
+   * .why =
+   * - source-first (default): read the source store every time; reflects the latest write, cross-process overwrites included
+   * - memory-first (opt-in): an in-process memory hit short-circuits the source read, for speed
+   * - options.consistency overrides the cache-wide default for this one read
+   */
+  const getWithConsistency = async (
+    key: string,
+    options?: { consistency?: SimpleOnDiskCacheConsistency },
+  ): ReturnType<typeof get> => {
+    const consistency = options?.consistency ?? defaultConsistency;
+
+    // memory-first: check memory before disk, to save reads
+    if (consistency === 'memory-first') return getWithMemory(key);
+
+    // source-first: read the source store directly, past any memory copy
+    const valueFoundOnDisk = await getWithValidKeyTracking(key);
+
+    // if this cache uses memory (memory-first default), keep it warm with the fresh value
+    if (defaultConsistency === 'memory-first' && valueFoundOnDisk !== undefined)
+      await cacheInMemory.set(key, valueFoundOnDisk);
+
+    return valueFoundOnDisk;
+  };
+  /**
+   * define how to set an item to the cache, per the cache's consistency policy
+   *
+   * .what = writes the source store always; writes the in-memory copy only for a memory-first cache
+   * .why = a source-first cache never reads from memory, so a memory write would be dead work
+   */
+  const setWithConsistency = async (
     ...args: Parameters<typeof set>
   ): Promise<void> => {
     // set to disk first, get the computed expiresAtMse
     const { expiresAtMse } = await setWithValidKeyTracked(...args);
+
+    // a source-first cache never reads from memory, so skip the memory write (no dead work)
+    if (defaultConsistency !== 'memory-first') return;
 
     /**
      * set to memory with expiresAtMseLeft (TTL left from disk's perspective)
@@ -487,8 +544,8 @@ export const createCache = ({
    * return the api
    */
   return {
-    set: setWithMemory,
-    get: getWithMemory,
+    set: setWithConsistency,
+    get: getWithConsistency,
     keys: getValidKeys,
   };
 };

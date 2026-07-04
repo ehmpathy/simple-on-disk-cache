@@ -236,9 +236,10 @@ describe('cache', () => {
       // spy on the readFile api
       const readFileSpy = jest.spyOn(fs, 'readFile');
 
-      // create the cache
+      // create the cache in memory-first mode, since that is where the redundant-read prevention lives
       const cacheFirst = createCache({
         directory: directoryToPersistTo,
+        consistency: 'memory-first',
       });
 
       // set a value
@@ -257,6 +258,7 @@ describe('cache', () => {
       // now, create a new cache, to clear out the in memory cache
       const cacheSecond = createCache({
         directory: directoryToPersistTo,
+        consistency: 'memory-first',
       });
 
       // get the value again
@@ -272,6 +274,65 @@ describe('cache', () => {
 
       // verify that we did not readFile any more times, since it should have been .set to memory already
       expect(readFileSpy).toHaveBeenCalledTimes(3);
+    });
+    describe('consistency', () => {
+      // a second cache instance has its own memory closure, so it stands in for a different process writing to the same store
+      it('should default to source-first: reflect a cross-process overwrite', async () => {
+        const key = 'election-source-first';
+        const cacheA = createCache({ directory: directoryToPersistTo }); // default source-first
+        const cacheB = createCache({ directory: directoryToPersistTo }); // separate memory = a different process
+
+        // cacheA writes the first value
+        await cacheA.set(key, 'tokenA');
+        expect(await cacheA.get(key)).toEqual('tokenA');
+
+        // cacheB overwrites the source, out of cacheA's process
+        await cacheB.set(key, 'tokenB');
+
+        // cacheA, being source-first, sees the overwrite
+        expect(await cacheA.get(key)).toEqual('tokenB');
+      });
+      it('should serve a stale value on a memory-first cache after a cross-process overwrite', async () => {
+        const key = 'election-memory-first';
+        const cacheA = createCache({
+          directory: directoryToPersistTo,
+          consistency: 'memory-first',
+        });
+        const cacheB = createCache({ directory: directoryToPersistTo });
+
+        // cacheA writes and warms its memory
+        await cacheA.set(key, 'tokenA');
+        expect(await cacheA.get(key)).toEqual('tokenA');
+
+        // cacheB overwrites the source
+        await cacheB.set(key, 'tokenB');
+
+        // cacheA still returns its warm memory copy (stale, as expected for memory-first)
+        expect(await cacheA.get(key)).toEqual('tokenA');
+      });
+      it('should let a per-read source-first override bypass memory and keep it warm', async () => {
+        const key = 'election-override';
+        const cacheA = createCache({
+          directory: directoryToPersistTo,
+          consistency: 'memory-first',
+        });
+        const cacheB = createCache({ directory: directoryToPersistTo });
+
+        // cacheA writes and warms its memory
+        await cacheA.set(key, 'tokenA');
+        expect(await cacheA.get(key)).toEqual('tokenA');
+
+        // cacheB overwrites the source
+        await cacheB.set(key, 'tokenB');
+
+        // a per-read source-first override sees the fresh value, past memory
+        expect(await cacheA.get(key, { consistency: 'source-first' })).toEqual(
+          'tokenB',
+        );
+
+        // and it leaves memory warm with the fresh value, so later memory-first reads see it too
+        expect(await cacheA.get(key)).toEqual('tokenB');
+      });
     });
   });
   describe('cloud', () => {
@@ -325,23 +386,24 @@ describe('cache', () => {
       const { set, get } = createCache({ directory: directoryToPersistTo }); // remember, default expiration is greater than 1 min
 
       // create timers before set() so they track from TTL start, not set() return
-      const timer3s = genTimer({ for: { seconds: 3 } });
-      const timer6s = genTimer({ for: { seconds: 6 } });
-      await set('ice-cream-state', 'solid', { expiration: { seconds: 5 } }); // ice cream changes quickly in the heat! lets keep a quick eye on this
+      // note: wide windows (12s ttl, checks at 5s + 16s) absorb s3 latency; under the source-first default every get hits s3 (~2-4s each), so tight margins would flake as accumulated read latency drifts past the ttl boundary
+      const timer5s = genTimer({ for: { seconds: 5 } });
+      const timer16s = genTimer({ for: { seconds: 16 } });
+      await set('ice-cream-state', 'solid', { expiration: { seconds: 12 } }); // ice cream changes quickly in the heat! lets keep a quick eye on this
 
       // prove that we recorded the value and its accessible immediately after set
       const iceCreamState = await get('ice-cream-state');
       expect(iceCreamState).toEqual('solid');
 
-      // prove that the value is still accessible after 3 seconds from TTL start
-      await sleep(timer3s.get().left.milliseconds);
-      const iceCreamStateAfter3Sec = await get('ice-cream-state');
-      expect(iceCreamStateAfter3Sec).toEqual('solid'); // still should say solid
+      // prove that the value is still accessible after 5 seconds from TTL start (well before the 12s ttl)
+      await sleep(timer5s.get().left.milliseconds);
+      const iceCreamStateAfter5Sec = await get('ice-cream-state');
+      expect(iceCreamStateAfter5Sec).toEqual('solid'); // still should say solid
 
-      // and prove that after a total of 6 seconds from TTL start, the state is no longer in the cache
-      await sleep(timer6s.get().left.milliseconds); // 3 more seconds
-      const iceCreamStateAfter6Sec = await get('ice-cream-state');
-      expect(iceCreamStateAfter6Sec).toEqual(undefined); // no longer defined, since the item level seconds until expiration was 5
+      // and prove that after 16 seconds from TTL start (well past the 12s ttl), the state is no longer in the cache
+      await sleep(timer16s.get().left.milliseconds);
+      const iceCreamStateAfter16Sec = await get('ice-cream-state');
+      expect(iceCreamStateAfter16Sec).toEqual(undefined); // no longer defined, since the item level seconds until expiration was 12
     });
     it('should return undefined if a key has never been cached', async () => {
       const { get } = createCache({ directory: directoryToPersistTo });
@@ -365,6 +427,65 @@ describe('cache', () => {
       await set('slash-test', 'works');
       const value = await get('slash-test');
       expect(value).toEqual('works');
+    });
+    describe('consistency', () => {
+      // a second cache instance has its own memory closure, so it stands in for a different process writing to the same store
+      it('should default to source-first: reflect a cross-process overwrite', async () => {
+        const key = 'election-source-first';
+        const cacheA = createCache({ directory: directoryToPersistTo }); // default source-first
+        const cacheB = createCache({ directory: directoryToPersistTo }); // separate memory = a different process
+
+        // cacheA writes the first value
+        await cacheA.set(key, 'tokenA');
+        expect(await cacheA.get(key)).toEqual('tokenA');
+
+        // cacheB overwrites the source, out of cacheA's process
+        await cacheB.set(key, 'tokenB');
+
+        // cacheA, being source-first, sees the overwrite
+        expect(await cacheA.get(key)).toEqual('tokenB');
+      });
+      it('should serve a stale value on a memory-first cache after a cross-process overwrite', async () => {
+        const key = 'election-memory-first';
+        const cacheA = createCache({
+          directory: directoryToPersistTo,
+          consistency: 'memory-first',
+        });
+        const cacheB = createCache({ directory: directoryToPersistTo });
+
+        // cacheA writes and warms its memory
+        await cacheA.set(key, 'tokenA');
+        expect(await cacheA.get(key)).toEqual('tokenA');
+
+        // cacheB overwrites the source
+        await cacheB.set(key, 'tokenB');
+
+        // cacheA still returns its warm memory copy (stale, as expected for memory-first)
+        expect(await cacheA.get(key)).toEqual('tokenA');
+      });
+      it('should let a per-read source-first override bypass memory and keep it warm', async () => {
+        const key = 'election-override';
+        const cacheA = createCache({
+          directory: directoryToPersistTo,
+          consistency: 'memory-first',
+        });
+        const cacheB = createCache({ directory: directoryToPersistTo });
+
+        // cacheA writes and warms its memory
+        await cacheA.set(key, 'tokenA');
+        expect(await cacheA.get(key)).toEqual('tokenA');
+
+        // cacheB overwrites the source
+        await cacheB.set(key, 'tokenB');
+
+        // a per-read source-first override sees the fresh value, past memory
+        expect(await cacheA.get(key, { consistency: 'source-first' })).toEqual(
+          'tokenB',
+        );
+
+        // and it leaves memory warm with the fresh value, so later memory-first reads see it too
+        expect(await cacheA.get(key)).toEqual('tokenB');
+      });
     });
   });
 });
