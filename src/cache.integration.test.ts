@@ -2,7 +2,8 @@ import { promises as fs } from 'fs';
 import { type IsoDuration, sleep, toMilliseconds } from 'iso-time';
 import { sdkAwsS3 } from 'sdk-aws-s3';
 
-import { createCache, RESERVED_CACHE_KEY_FOR_VALID_KEYS } from './cache';
+import { RESERVED_CACHE_KEY_FOR_VALID_KEYS } from './domain.objects/RESERVED_CACHE_KEY_FOR_VALID_KEYS';
+import { createCache } from './domain.operations/createCache';
 
 /**
  * create a timer that tracks time left until target
@@ -24,6 +25,23 @@ jest.setTimeout(60 * 1000);
 describe('cache', () => {
   describe('local', () => {
     const directoryToPersistTo = { local: { path: `${__dirname}/__tmp__` } };
+    it('should round-trip an empty-string value on a memory-first cache', async () => {
+      // regression: an empty string is a legitimate cached value, distinct from undefined (a
+      // tombstone). the memory-first read path once used truthy guards that misread '' as a miss →
+      // it returned undefined instead of the stored ''. this proves '' survives the memory tier.
+      const { set, get } = createCache({
+        directory: directoryToPersistTo,
+        consistency: 'memory-first',
+      });
+      const key = `empty-string-memory-first-${Date.now()}`;
+
+      // store an empty string, then read it back through the memory-first path
+      await set(key, '');
+      const valueFound = await get(key);
+
+      // the empty string must survive — not collapse to undefined
+      expect(valueFound).toEqual('');
+    });
     it('should be able to add an item to the cache', async () => {
       const { set } = createCache({ directory: directoryToPersistTo });
       await set('meaning-of-life', '42');
@@ -44,39 +62,55 @@ describe('cache', () => {
         directory: directoryToPersistTo,
         expiration: { seconds: 10 },
       }); // we're gonna use this cache to keep track of the popcorn in the microwave - we should check more regularly since it changes quickly!
+
+      // create timers before set() so each checkpoint tracks from an absolute TTL start, not from
+      // set() return (the genTimer pattern — no relative-sleep drift accumulates across checkpoints).
+      // note: WIDE 5s margins on BOTH sides of the 10s ttl boundary, so even a multi-second single
+      //       sleep overshoot under concurrent-suite + real-s3 load can never straddle the expiry —
+      //       the pre-expiry check fires at 5s (5s before) and the post-expiry check at 15s (5s after)
+      const timer5s = genTimer({ for: { seconds: 5 } });
+      const timer15s = genTimer({ for: { seconds: 15 } });
       await set('how-popped-is-the-popcorn', 'not popped');
 
-      // prove that we recorded the value and its accessible immediately after setting
+      // prove that we recorded the value and its accessible immediately after set
       const popcornStatus = await get('how-popped-is-the-popcorn');
       expect(popcornStatus).toEqual('not popped');
 
-      // prove that the value is still accessible after 9 seconds, since default ttl is 10 seconds
-      await sleep(9 * 1000);
-      const popcornStatusAfter9Sec = await get('how-popped-is-the-popcorn');
-      expect(popcornStatusAfter9Sec).toEqual('not popped'); // still should say not popped
+      // prove that the value is still accessible at 5s from TTL start (a wide 5s margin before expiry)
+      await sleep(timer5s.get().left.milliseconds);
+      const popcornStatusBeforeExpiry = await get('how-popped-is-the-popcorn');
+      expect(popcornStatusBeforeExpiry).toEqual('not popped'); // still should say not popped
 
-      // and prove that after a total of 9 seconds, the status is no longer in the cache
-      await sleep(2 * 1000); // sleep 1 more second
-      const popcornStatusAfter10Sec = await get('how-popped-is-the-popcorn');
-      expect(popcornStatusAfter10Sec).toEqual(undefined); // no longer defined, since the default seconds until expiration was 15
+      // and prove that well after the 10s ttl (at 15s from TTL start, a 5s margin), the status is gone
+      await sleep(timer15s.get().left.milliseconds);
+      const popcornStatusAfterExpiry = await get('how-popped-is-the-popcorn');
+      expect(popcornStatusAfterExpiry).toEqual(undefined); // no longer defined, since the default seconds until expiration was 10
     });
     it('should respect the item level expiration for the cache', async () => {
       const { set, get } = createCache({ directory: directoryToPersistTo }); // remember, default expiration is greater than 1 min
+
+      // create timers before set() so each checkpoint tracks from an absolute TTL start, not from
+      // set() return (the genTimer pattern — no relative-sleep drift accumulates across checkpoints).
+      // note: WIDE margins on BOTH sides of the 5s item ttl (check at 2s, 3s before; and at 10s, 5s
+      //       after), so a multi-second single sleep overshoot under concurrent-suite cpu load can
+      //       never straddle the expiry
+      const timer2s = genTimer({ for: { seconds: 2 } });
+      const timer10s = genTimer({ for: { seconds: 10 } });
       await set('ice-cream-state', 'solid', { expiration: { seconds: 5 } }); // ice cream changes quickly in the heat! lets keep a quick eye on this
 
-      // prove that we recorded the value and its accessible immediately after setting
+      // prove that we recorded the value and its accessible immediately after the set
       const iceCreamState = await get('ice-cream-state');
       expect(iceCreamState).toEqual('solid');
 
-      // prove that the value is still accessible after 4 seconds, since default ttl is 5 seconds
-      await sleep(4 * 1000);
-      const iceCreamStateAfter4Sec = await get('ice-cream-state');
-      expect(iceCreamStateAfter4Sec).toEqual('solid'); // still should say solid
+      // prove that the value is still accessible at 2s from TTL start (a wide 3s margin before the 5s ttl)
+      await sleep(timer2s.get().left.milliseconds);
+      const iceCreamStateBeforeExpiry = await get('ice-cream-state');
+      expect(iceCreamStateBeforeExpiry).toEqual('solid'); // still should say solid
 
-      // and prove that after a total of 5 seconds, the state is no longer in the cache
-      await sleep(2 * 1000); // sleep 1 more second
-      const iceCreamStateAfter5Sec = await get('ice-cream-state');
-      expect(iceCreamStateAfter5Sec).toEqual(undefined); // no longer defined, since the item level seconds until expiration was 5
+      // and prove that well after the 5s ttl (at 10s from TTL start, a 5s margin), the state is gone
+      await sleep(timer10s.get().left.milliseconds);
+      const iceCreamStateAfterExpiry = await get('ice-cream-state');
+      expect(iceCreamStateAfterExpiry).toEqual(undefined); // no longer defined, since the item level seconds until expiration was 5
     });
     it('should consider secondsUntilExpiration of null or infinity as never expiring', async () => {
       const { set, get } = createCache({
@@ -213,7 +247,7 @@ describe('cache', () => {
       const keys1 = await cacheFirst.keys();
       expect(keys1).toContain('schrodingers-cat');
 
-      // simulate external deletion of the cache file (e.g., S3 object deleted, disk corruption, etc.)
+      // simulate external deletion of the cache file (e.g., cloud object deleted, local disk corruption, etc.)
       await fs.unlink(`${directoryToPersistTo.local.path}/schrodingers-cat`);
 
       // create a new cache instance to clear the in-memory cache
@@ -227,13 +261,43 @@ describe('cache', () => {
       const catStateAfterDeletion = await cacheSecond.get('schrodingers-cat');
       expect(catStateAfterDeletion).toEqual(undefined);
     });
-    it('should prevent redundant disk.reads to maximize speed', async () => {
+    it('should return undefined for a corrupt (unparseable) cache file', async () => {
+      // .why = a cache file whose bytes are not valid json is a known-degraded state; the
+      //        canonical envelope reader counts it as logically absent (get → undefined),
+      //        rather than a raw JSON.parse throw propagated up to the caller
+      const cache = createCache({ directory: directoryToPersistTo });
+      const key = 'corrupt-envelope';
+
+      // write raw non-json bytes directly, to simulate a truncated / clobbered cache file
+      await fs.writeFile(
+        `${directoryToPersistTo.local.path}/${key}`,
+        'not-json',
+        { encoding: 'utf-8' },
+      );
+
+      // a fresh instance (no memory) must read the corrupt file as absent, not fail loud
+      const value = await createCache({ directory: directoryToPersistTo }).get(
+        key,
+      );
+      expect(value).toEqual(undefined);
+
+      // and it stays coherent — a subsequent set + get round-trips normally
+      await cache.set(key, 'healed');
+      expect(await cache.get(key)).toEqual('healed');
+    });
+    it('should prevent redundant local disk reads to maximize speed', async () => {
       // clear out the old keys, so that other tests dont affect the keycounting we want to do here
       await fs.unlink(
         `${directoryToPersistTo.local.path}/${RESERVED_CACHE_KEY_FOR_VALID_KEYS}`,
       );
 
-      // spy on the readFile api
+      // .spy = a pure OBSERVATION spy on the real fs.readFile — NOT a mock
+      // .why = per rule.forbid.integration.mocks' exception clause + the org lesson "can spy, but
+      //        never mock": this jest.spyOn carries NO .mockImplementation / .mockReturnValue, so
+      //        the genuine fs.readFile still runs against the real local disk (the integration stays real).
+      //        the spy only tallies call counts — the sole way to assert the redundant-read-prevention
+      //        behavior (that a memory-first hit serves from memory and does NOT re-hit the local disk), which
+      //        has no observable side effect to check other than "how many times did we read the local disk?".
       const readFileSpy = jest.spyOn(fs, 'readFile');
 
       // create the cache in memory-first mode, since that is where the redundant-read prevention lives
@@ -245,15 +309,19 @@ describe('cache', () => {
       // set a value
       await cacheFirst.set('meaning-of-life', '42');
 
-      // verify the expected number of disk reads
-      expect(readFileSpy).toHaveBeenCalledTimes(1);
+      // verify the expected number of local disk reads
+      // .why = a real-key local set now reads twice: once for the valid_keys index, and once for the
+      //        lock-ownership check the compare-and-delete release performs before it unlinks the lock
+      //        (the per-key lock that guards every local write, conditional or not — see the readme's
+      //        "behavior change for ALL local writes" note).
+      expect(readFileSpy).toHaveBeenCalledTimes(2);
 
       // get the value
       const valueFirst = await cacheFirst.get('meaning-of-life');
       expect(valueFirst).toEqual('42');
 
       // verify that we did not readFile any more times, since it should have been .set to memory already
-      expect(readFileSpy).toHaveBeenCalledTimes(1);
+      expect(readFileSpy).toHaveBeenCalledTimes(2);
 
       // now, create a new cache, to clear out the in memory cache
       const cacheSecond = createCache({
@@ -266,14 +334,16 @@ describe('cache', () => {
       expect(valueSecond).toEqual('42'); // same value
 
       // verify that we read from disk once to find it, since it was not in memory
-      expect(readFileSpy).toHaveBeenCalledTimes(3); // 2x get on read through
+      // .why = the running tally is now 4: the earlier set's 2 reads (valid_keys + lock release),
+      //        plus this cold memory-first get's 2 reads (valid_keys + the value file) on read-through.
+      expect(readFileSpy).toHaveBeenCalledTimes(4); // 2x get on read through
 
       // get the value again
       const valueThird = await cacheSecond.get('meaning-of-life');
       expect(valueThird).toEqual('42'); // same value
 
       // verify that we did not readFile any more times, since it should have been .set to memory already
-      expect(readFileSpy).toHaveBeenCalledTimes(3);
+      expect(readFileSpy).toHaveBeenCalledTimes(4);
     });
     describe('consistency', () => {
       // a second cache instance has its own memory closure, so it stands in for a different process writing to the same store
@@ -363,24 +433,28 @@ describe('cache', () => {
         expiration: { seconds: 10 },
       }); // we're gonna use this cache to keep track of the popcorn in the microwave - we should check more regularly since it changes quickly!
 
-      // create timers before set() so they track from TTL start, not set() return
-      const timer8s = genTimer({ for: { seconds: 8 } });
-      const timer10s = genTimer({ for: { seconds: 10 } });
+      // create timers before set() so each checkpoint tracks from an absolute TTL start, not from
+      // set() return (the genTimer pattern — no relative-sleep drift accumulates across checkpoints).
+      // note: WIDE 5s margins on BOTH sides of the 10s ttl boundary, so even a multi-second single
+      //       sleep overshoot under concurrent-suite + real-s3 load can never straddle the expiry —
+      //       the pre-expiry check fires at 5s (5s before) and the post-expiry check at 15s (5s after)
+      const timer5s = genTimer({ for: { seconds: 5 } });
+      const timer15s = genTimer({ for: { seconds: 15 } });
       await set('how-popped-is-the-popcorn', 'not popped');
 
       // prove that we recorded the value and its accessible immediately after set
       const popcornStatus = await get('how-popped-is-the-popcorn');
       expect(popcornStatus).toEqual('not popped');
 
-      // prove that the value is still accessible after 8 seconds from TTL start
-      await sleep(timer8s.get().left.milliseconds);
-      const popcornStatusAfter9Sec = await get('how-popped-is-the-popcorn');
-      expect(popcornStatusAfter9Sec).toEqual('not popped'); // still should say not popped
+      // prove that the value is still accessible at 5s from TTL start (a wide 5s margin before expiry)
+      await sleep(timer5s.get().left.milliseconds);
+      const popcornStatusBeforeExpiry = await get('how-popped-is-the-popcorn');
+      expect(popcornStatusBeforeExpiry).toEqual('not popped'); // still should say not popped
 
-      // and prove that after a total of 10 seconds from TTL start, the status is no longer in the cache
-      await sleep(timer10s.get().left.milliseconds); // 2 more seconds
-      const popcornStatusAfter10Sec = await get('how-popped-is-the-popcorn');
-      expect(popcornStatusAfter10Sec).toEqual(undefined); // no longer defined, since the default seconds until expiration was 10
+      // and prove that well after the 10s ttl (at 15s from TTL start, a 5s margin), the status is gone
+      await sleep(timer15s.get().left.milliseconds);
+      const popcornStatusAfterExpiry = await get('how-popped-is-the-popcorn');
+      expect(popcornStatusAfterExpiry).toEqual(undefined); // no longer defined, since the default seconds until expiration was 10
     });
     it('should respect the item level expiration for the cache', async () => {
       const { set, get } = createCache({ directory: directoryToPersistTo }); // remember, default expiration is greater than 1 min

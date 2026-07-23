@@ -1,0 +1,76 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`cache conditionals cloud compare-and-delete (set undefined + condition) should throw against a stale token and leave the value intact 1`] = `"✋ SimpleCacheConditionError: cache condition failed: version mismatch"`;
+
+exports[`cache conditionals cloud compare-and-set (condition.version: token) should let exactly one of two racers win 1`] = `"✋ SimpleCacheConditionError: cache condition failed: version mismatch"`;
+
+exports[`cache conditionals cloud compare-and-set (condition.version: token) should succeed when the stored version matches 1`] = `"v2"`;
+
+exports[`cache conditionals cloud compare-and-set (condition.version: token) should throw against a truly-absent key with a real token 1`] = `"✋ SimpleCacheConditionError: cache condition failed: version mismatch"`;
+
+exports[`cache conditionals cloud compare-and-set (condition.version: token) should throw when the stored version does not match 1`] = `"✋ SimpleCacheConditionError: cache condition failed: version mismatch"`;
+
+exports[`cache conditionals cloud concurrent put-if-absent should let exactly one of two racers win 1`] = `"✋ SimpleCacheConditionError: cache condition failed: expected key to be absent"`;
+
+exports[`cache conditionals cloud get with condition should return the value when the version matches 1`] = `"v1"`;
+
+exports[`cache conditionals cloud get with condition should throw for condition.version: null against a present key 1`] = `"✋ SimpleCacheConditionError: cache condition failed: expected key to be absent"`;
+
+exports[`cache conditionals cloud get with condition should throw on a version mismatch 1`] = `"✋ SimpleCacheConditionError: cache condition failed: version mismatch"`;
+
+exports[`cache conditionals cloud put-if-absent (condition.version: null) should let exactly one racer reclaim an expired key 1`] = `"✋ SimpleCacheConditionError: cache condition failed: expected key to be absent"`;
+
+exports[`cache conditionals cloud put-if-absent (condition.version: null) should succeed on an open key 1`] = `"mine"`;
+
+exports[`cache conditionals cloud put-if-absent (condition.version: null) should throw SimpleCacheConditionError on a held key 1`] = `"✋ SimpleCacheConditionError: cache condition failed: expected key to be absent"`;
+
+exports[`cache conditionals content-hash token (local) should compute a deterministic token from the canonical value 1`] = `"d201b739ad2d96eb35f0afcc206312f7040a818d9f4f858682f6e21a252e1462"`;
+
+exports[`cache conditionals local compare-and-delete (set undefined + condition) should throw against a stale token and leave the value intact 1`] = `"✋ SimpleCacheConditionError: cache condition failed: version mismatch"`;
+
+exports[`cache conditionals local compare-and-set (condition.version: token) should let exactly one of two racers win 1`] = `"✋ SimpleCacheConditionError: cache condition failed: version mismatch"`;
+
+exports[`cache conditionals local compare-and-set (condition.version: token) should succeed when the stored version matches 1`] = `"v2"`;
+
+exports[`cache conditionals local compare-and-set (condition.version: token) should throw against a truly-absent key with a real token 1`] = `"✋ SimpleCacheConditionError: cache condition failed: version mismatch"`;
+
+exports[`cache conditionals local compare-and-set (condition.version: token) should throw when the stored version does not match 1`] = `"✋ SimpleCacheConditionError: cache condition failed: version mismatch"`;
+
+exports[`cache conditionals local concurrent put-if-absent should let exactly one of two racers win 1`] = `"✋ SimpleCacheConditionError: cache condition failed: expected key to be absent"`;
+
+exports[`cache conditionals local get with condition should return the value when the version matches 1`] = `"v1"`;
+
+exports[`cache conditionals local get with condition should throw for condition.version: null against a present key 1`] = `"✋ SimpleCacheConditionError: cache condition failed: expected key to be absent"`;
+
+exports[`cache conditionals local get with condition should throw on a version mismatch 1`] = `"✋ SimpleCacheConditionError: cache condition failed: version mismatch"`;
+
+exports[`cache conditionals local key lock reclaim + deadline should fail loud when a live lock never frees before the deadline 1`] = `
+"UnexpectedCodePathError: could not acquire the local cache key lock within 5s — another writer holds it and did not release within the deadline.
+this is expected only under heavy same-key write contention or a stuck writer.
+to fix: retry the operation (transient contention clears on its own), or if a process crashed mid-write, delete the stale lock file at the lockPath below (it is auto-reclaimed after 30s).
+the local tier is per-machine — for cross-machine coordination use the cloud (s3) tier."
+`;
+
+exports[`cache conditionals local put-if-absent (condition.version: null) should let exactly one racer reclaim an expired key 1`] = `"✋ SimpleCacheConditionError: cache condition failed: expected key to be absent"`;
+
+exports[`cache conditionals local put-if-absent (condition.version: null) should succeed on an open key 1`] = `"mine"`;
+
+exports[`cache conditionals local put-if-absent (condition.version: null) should throw SimpleCacheConditionError on a held key 1`] = `"✋ SimpleCacheConditionError: cache condition failed: expected key to be absent"`;
+
+exports[`cache conditionals non-conformant cloud adapter (fail-loud) should fail loud on version() when the get adapter ignores include.meta 1`] = `
+"UnexpectedCodePathError: cloud adapter ignored include.meta — cannot read the version token for the conditional operation.
+this happens only with a non-conformant cloud adapter that drops the include.meta request.
+to fix: use a cloud adapter that honors include.meta (e.g. the shipped sdk-aws-s3), which returns the object's etag."
+`;
+
+exports[`cache conditionals non-conformant cloud adapter (fail-loud) should fail loud when a conditional set returns no meta.etag 1`] = `
+"UnexpectedCodePathError: cloud adapter ignored include.meta on a conditional set — cannot confirm the condition was enforced.
+a non-conformant adapter that drops include.meta may silently downgrade a conditional write to last-writer-wins — the exact lost-update this guard prevents.
+to fix: use a cloud adapter that honors include.meta (e.g. the shipped sdk-aws-s3), which returns the written object's etag."
+`;
+
+exports[`cache conditionals non-conformant cloud adapter (fail-loud) should fail loud when cloud put-if-absent keeps racing to absent 1`] = `
+"UnexpectedCodePathError: cloud put-if-absent repeatedly raced to absent — attempts exhausted.
+this is expected only if another process deletes and recreates this same key in a tight loop.
+to fix: retry the operation (a transient race clears on its own), or stop the concurrent delete-and-recreate churn on this key."
+`;

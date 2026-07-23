@@ -1,9 +1,11 @@
-export type {
-  DirectoryToPersistTo,
-  SimpleOnDiskCache,
-  SimpleOnDiskCacheCloudAdapter,
-  SimpleOnDiskCacheConsistency,
-} from './cache';
-export { createCache } from './cache';
-export { InvalidOnDiskCacheKeyError } from './key/assertIsValidOnDiskCacheKey';
-export { castToSafeOnDiskCacheKey } from './key/castToSafeOnDiskCacheKey';
+export type { DirectoryToPersistTo } from './domain.objects/DirectoryToPersistTo';
+export { InvalidOnDiskCacheKeyError } from './domain.objects/InvalidOnDiskCacheKeyError';
+export { ReservedOnDiskCacheKeyError } from './domain.objects/ReservedOnDiskCacheKeyError';
+export type { SimpleCacheCondition } from './domain.objects/SimpleCacheCondition';
+export { SimpleCacheConditionError } from './domain.objects/SimpleCacheConditionError';
+export type { SimpleOnDiskCache } from './domain.objects/SimpleOnDiskCache';
+export type { SimpleOnDiskCacheCloudAdapter } from './domain.objects/SimpleOnDiskCacheCloudAdapter';
+export type { SimpleOnDiskCacheConsistency } from './domain.objects/SimpleOnDiskCacheConsistency';
+export { isSimpleCacheConditionError } from './domain.operations/condition/isSimpleCacheConditionError';
+export { createCache } from './domain.operations/createCache';
+export { castToSafeOnDiskCacheKey } from './domain.operations/key/castToSafeOnDiskCacheKey';

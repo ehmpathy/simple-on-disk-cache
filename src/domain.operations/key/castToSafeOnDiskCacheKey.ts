@@ -24,6 +24,9 @@ export const castToSafeOnDiskCacheKey = <TInput extends Serializable>(input: {
      * .what = the version of the procedure to cache for
      * .why =
      *   - ensures that if you upgrade the logic within your procedure, you can invalidate all of the prior cached results
+     * .note = distinct from `cache.version(key)` — this is a caller-supplied procedure-logic
+     *         version (for key invalidation); that is a per-value content-hash token (for
+     *         conditional writes). same word, different scope — do not conflate the two.
      */
     version: string | null;
   };
