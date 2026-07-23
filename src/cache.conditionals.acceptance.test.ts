@@ -724,7 +724,9 @@ describe('conditional writes — public contract acceptance', () => {
       // acquire then release, so the lock is free again
       await set(lockKey, 'holder-1', { condition: { version: null } });
       const heldToken = await version(lockKey);
-      await set(lockKey, undefined, { condition: { version: heldToken ?? null } });
+      await set(lockKey, undefined, {
+        condition: { version: heldToken ?? null },
+      });
 
       // reacquire: the freed global lock accepts a fresh put-if-absent holder
       await set(lockKey, 'holder-3', { condition: { version: null } });
