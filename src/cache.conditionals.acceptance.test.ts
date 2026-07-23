@@ -17,11 +17,13 @@ import {
   SimpleCacheConditionError,
 } from './index';
 
-// the cloud (real s3) tests each run a few sequential s3 conditional round-trips (~3-5s each under
-// real network + load). each `it` is scoped to a single conditional primitive so it stays a handful
-// of round-trips — well under this per-test cap — rather than one giant lifecycle that would chain
-// ~12 round-trips and risk the default 60s timeout under load. the local tests are credential-free + fast
-jest.setTimeout(60 * 1000);
+// the cloud (real s3) tests each run a few sequential s3 conditional round-trips. two levers keep them
+// off the timeout: (1) each `it` is scoped to a single conditional primitive, so it chains only a
+// handful of round-trips (~10s typical) rather than one ~12-round-trip lifecycle; (2) this per-test cap
+// carries headroom above that typical, because a single s3 If-Match / If-None-Match op can tail-spike
+// to tens of seconds under load — the cap must absorb that worst case, not the median. together the
+// split + headroom leave no realistic path to a timeout flake. the local tests are credential-free + fast
+jest.setTimeout(120 * 1000);
 
 // style note: this file uses plain jest `describe`/`it` with `// arrange/act/assert` markers, NOT
 // test-fns `given`/`when`/`then`. this is the vision's explicit choice — new conditional tests match

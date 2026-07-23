@@ -41,6 +41,8 @@ if (
  *   - auto-inject keys into process.env
  *   - fail fast with helpful error if keyrack locked or keys absent
  */
+// in CI, aws credentials arrive via oidc as env vars already — so keyrack is skipped there
+// (mirrors jest.integration.env.ts); locally, source them lenient so a partial keyrack still runs
 const keyrackYmlPath = join(process.cwd(), '.agent/keyrack.yml');
-if (existsSync(keyrackYmlPath))
-  keyrack.source({ env: 'test', owner: 'ehmpath', mode: 'strict' });
+if (existsSync(keyrackYmlPath) && !process.env.CI)
+  keyrack.source({ env: 'test', owner: 'ehmpath', mode: 'lenient' });
