@@ -2,6 +2,7 @@
 *.local.json
 *.log
 *.tsbuildinfo
+src/__tmp_acceptance*/
 .agent/.cache/
 .artifact
 .cache/

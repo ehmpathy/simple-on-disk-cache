@@ -1,0 +1,140 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`conditional writes — public contract acceptance base surface (plain get / set / keys, no condition) stores a value, reads it back, and drops it from keys on invalidation: 1-stored 1`] = `"hello"`;
+
+exports[`conditional writes — public contract acceptance base surface (plain get / set / keys, no condition) stores a value, reads it back, and drops it from keys on invalidation: 2-overwritten 1`] = `"howdy"`;
+
+exports[`conditional writes — public contract acceptance base surface (plain get / set / keys, no condition) stores a value, reads it back, and drops it from keys on invalidation: 3-absent 1`] = `undefined`;
+
+exports[`conditional writes — public contract acceptance base surface (plain get / set / keys, no condition) stores a value, reads it back, and drops it from keys on invalidation: 4-populated 1`] = `"note"`;
+
+exports[`conditional writes — public contract acceptance base surface (plain get / set / keys, no condition) stores a value, reads it back, and drops it from keys on invalidation: 5-empty 1`] = `""`;
+
+exports[`conditional writes — public contract acceptance cloud tier — compute-once (real s3) lets exactly one racer win, and the loser converges on the winner via catch → re-read 1`] = `
+[
+  "lost",
+  "won",
+]
+`;
+
+exports[`conditional writes — public contract acceptance cloud tier — compute-once (real s3) rejects a second global compute-and-store with a caller-visible conflict message 1`] = `"✋ SimpleCacheConditionError: cache condition failed: expected key to be absent"`;
+
+exports[`conditional writes — public contract acceptance cloud tier — conditional read (real s3) runs the full cloud conditional read: matched serves the value, stale rejects: 1-served 1`] = `"v1"`;
+
+exports[`conditional writes — public contract acceptance cloud tier — conditional read (real s3) runs the full cloud conditional read: matched serves the value, stale rejects: 2-stale-rejected 1`] = `"✋ SimpleCacheConditionError: cache condition failed: version mismatch"`;
+
+exports[`conditional writes — public contract acceptance cloud tier — distributed-lock lifecycle (real s3) acquires an open global lock, then rejects a contender: 1-acquired 1`] = `"holder-1"`;
+
+exports[`conditional writes — public contract acceptance cloud tier — distributed-lock lifecycle (real s3) acquires an open global lock, then rejects a contender: 2-contended 1`] = `"✋ SimpleCacheConditionError: cache condition failed: expected key to be absent"`;
+
+exports[`conditional writes — public contract acceptance cloud tier — distributed-lock lifecycle (real s3) lets a fresh holder reacquire a freed lock: 5-reacquired 1`] = `"holder-3"`;
+
+exports[`conditional writes — public contract acceptance cloud tier — distributed-lock lifecycle (real s3) rejects a stale release, then frees the lock on its held version: 3-stale-release-rejected 1`] = `"✋ SimpleCacheConditionError: cache condition failed: version mismatch"`;
+
+exports[`conditional writes — public contract acceptance cloud tier — distributed-lock lifecycle (real s3) rejects a stale release, then frees the lock on its held version: 4-released 1`] = `undefined`;
+
+exports[`conditional writes — public contract acceptance cloud tier — optimistic concurrency (real s3) accepts a matched compare-and-set, then rejects a stale one: 1-accepted 1`] = `"v2"`;
+
+exports[`conditional writes — public contract acceptance cloud tier — optimistic concurrency (real s3) accepts a matched compare-and-set, then rejects a stale one: 2-stale-rejected 1`] = `"✋ SimpleCacheConditionError: cache condition failed: version mismatch"`;
+
+exports[`conditional writes — public contract acceptance cloud tier — optimistic concurrency (real s3) rejects a compare-and-set against an absent key: 3-absent-rejected 1`] = `"✋ SimpleCacheConditionError: cache condition failed: version mismatch"`;
+
+exports[`conditional writes — public contract acceptance compute-once (stampede protection) lets exactly one racer win, and the loser converges on the winner via catch → re-read 1`] = `
+[
+  "lost",
+  "won",
+]
+`;
+
+exports[`conditional writes — public contract acceptance compute-once (stampede protection) rejects a second compute-and-store with a caller-visible conflict message 1`] = `"✋ SimpleCacheConditionError: cache condition failed: expected key to be absent"`;
+
+exports[`conditional writes — public contract acceptance conditional read (get with a version guard) returns the value on a matched token and rejects a stale one: 1-served 1`] = `"v1"`;
+
+exports[`conditional writes — public contract acceptance conditional read (get with a version guard) returns the value on a matched token and rejects a stale one: 2-stale-rejected 1`] = `"✋ SimpleCacheConditionError: cache condition failed: version mismatch"`;
+
+exports[`conditional writes — public contract acceptance conditional read (get with a version guard) satisfies a read-if-absent guard on a truly absent key (returns undefined) 1`] = `undefined`;
+
+exports[`conditional writes — public contract acceptance distributed-lock lifecycle (acquire → release → reacquire) acquires a free lock, rejects a second holder, then frees it for reacquire: 1-acquired 1`] = `"holder-1"`;
+
+exports[`conditional writes — public contract acceptance distributed-lock lifecycle (acquire → release → reacquire) acquires a free lock, rejects a second holder, then frees it for reacquire: 2-contended 1`] = `"✋ SimpleCacheConditionError: cache condition failed: expected key to be absent"`;
+
+exports[`conditional writes — public contract acceptance distributed-lock lifecycle (acquire → release → reacquire) acquires a free lock, rejects a second holder, then frees it for reacquire: 3-stale-release-rejected 1`] = `"✋ SimpleCacheConditionError: cache condition failed: version mismatch"`;
+
+exports[`conditional writes — public contract acceptance distributed-lock lifecycle (acquire → release → reacquire) acquires a free lock, rejects a second holder, then frees it for reacquire: 4-released 1`] = `undefined`;
+
+exports[`conditional writes — public contract acceptance distributed-lock lifecycle (acquire → release → reacquire) acquires a free lock, rejects a second holder, then frees it for reacquire: 5-reacquired 1`] = `"holder-3"`;
+
+exports[`conditional writes — public contract acceptance distributed-lock lifecycle (acquire → release → reacquire) lets a fresh holder reacquire once the prior lock expires 1`] = `"holder-2"`;
+
+exports[`conditional writes — public contract acceptance invalid key rejection (friction hazard) rejects an invalid key on get with the same error 1`] = `
+"✋ InvalidOnDiskCacheKeyError: the on-disk cache key requested is invalid: 'bad/key' — only alphanumeric characters and period, dash, and underscore are allowed
+
+{
+  "key": "bad/key"
+}"
+`;
+
+exports[`conditional writes — public contract acceptance invalid key rejection (friction hazard) rejects an invalid key on set with a caller-visible message 1`] = `
+"✋ InvalidOnDiskCacheKeyError: the on-disk cache key requested is invalid: 'bad/key' — only alphanumeric characters and period, dash, and underscore are allowed
+
+{
+  "key": "bad/key"
+}"
+`;
+
+exports[`conditional writes — public contract acceptance invalid key rejection (friction hazard) rejects an invalid key on version with the same error 1`] = `
+"✋ InvalidOnDiskCacheKeyError: the on-disk cache key requested is invalid: 'bad/key' — only alphanumeric characters and period, dash, and underscore are allowed
+
+{
+  "key": "bad/key"
+}"
+`;
+
+exports[`conditional writes — public contract acceptance keys reader (list the tracked keys) reports an empty list when no keys are tracked 1`] = `""`;
+
+exports[`conditional writes — public contract acceptance keys reader (list the tracked keys) reports the set keys and drops an invalidated one 1`] = `"beta"`;
+
+exports[`conditional writes — public contract acceptance local lock (friction hazard) auto-reclaims a stale lock (crashed holder) so a fresh writer recovers: stale-lock-reclaimed 1`] = `"recovered"`;
+
+exports[`conditional writes — public contract acceptance local lock (friction hazard) fails loud with a caller-visible deadline message when a live lock never frees: live-lock-deadline 1`] = `
+"UnexpectedCodePathError: could not acquire the local cache key lock within 5s — another writer holds it and did not release within the deadline.
+this is expected only under heavy same-key write contention or a stuck writer.
+to fix: retry the operation (transient contention clears on its own), or if a process crashed mid-write, delete the stale lock file at the lockPath below (it is auto-reclaimed after 30s).
+the local tier is per-machine — for cross-machine coordination use the cloud (s3) tier."
+`;
+
+exports[`conditional writes — public contract acceptance optimistic concurrency (compare-and-set) accepts a write whose read version still matches 1`] = `"v2"`;
+
+exports[`conditional writes — public contract acceptance optimistic concurrency (compare-and-set) rejects a compare-and-set against an absent key 1`] = `"✋ SimpleCacheConditionError: cache condition failed: version mismatch"`;
+
+exports[`conditional writes — public contract acceptance optimistic concurrency (compare-and-set) rejects a write whose read version went stale 1`] = `"✋ SimpleCacheConditionError: cache condition failed: version mismatch"`;
+
+exports[`conditional writes — public contract acceptance reserved key rejection (friction hazard) rejects the reserved key on get with the same error 1`] = `
+"✋ ReservedOnDiskCacheKeyError: the on-disk cache key requested is reserved for internal use: '_.simple_on_disk_cache.valid_keys' — choose a different key
+
+{
+  "key": "_.simple_on_disk_cache.valid_keys"
+}"
+`;
+
+exports[`conditional writes — public contract acceptance reserved key rejection (friction hazard) rejects the reserved key on set with a caller-visible message 1`] = `
+"✋ ReservedOnDiskCacheKeyError: the on-disk cache key requested is reserved for internal use: '_.simple_on_disk_cache.valid_keys' — choose a different key
+
+{
+  "key": "_.simple_on_disk_cache.valid_keys"
+}"
+`;
+
+exports[`conditional writes — public contract acceptance reserved key rejection (friction hazard) rejects the reserved key on version with the same error 1`] = `
+"✋ ReservedOnDiskCacheKeyError: the on-disk cache key requested is reserved for internal use: '_.simple_on_disk_cache.valid_keys' — choose a different key
+
+{
+  "key": "_.simple_on_disk_cache.valid_keys"
+}"
+`;
+
+exports[`conditional writes — public contract acceptance version reader (read the current token) reports undefined for an absent key and an opaque token for a present one: 1-absent 1`] = `undefined`;
+
+exports[`conditional writes — public contract acceptance version reader (read the current token) reports undefined for an absent key and an opaque token for a present one: 2-present 1`] = `"3bfc269594ef649228e9a74bab00f042efc91d5acc6fbee31a382e80d42388fe"`;
+
+exports[`conditional writes — public contract acceptance version reader (read the current token) reports undefined for an expired key (logically absent) 1`] = `undefined`;
